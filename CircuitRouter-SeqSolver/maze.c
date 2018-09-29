@@ -124,30 +124,25 @@ void maze_free (maze_t* mazePtr){
 
 /* =============================================================================
  * addToGrid
- * argcheck: !(points outside grid ||negatiove points) * =============================================================================
+ * =============================================================================
  */
 static void addToGrid (grid_t* gridPtr, vector_t* vectorPtr, char* type){
     long i;
     long n = vector_getSize(vectorPtr);
-    
-    
-        
-    
     for (i = 0; i < n; i++) {
-
         coordinate_t* coordinatePtr = (coordinate_t*)vector_at(vectorPtr, i);
-        // TODO validar ponto
-        // Argument validation 
-        if( !grid_isPointValid (gridPtr, coordinatePtr->x, coordinatePtr->y, coordinatePtr->z)){
-                printf("outside bounds");
-            return;
+        if (!grid_isPointValid(gridPtr,
+                               coordinatePtr->x,
+                               coordinatePtr->y,
+                               coordinatePtr->z))
+        {
+            fprintf(stderr, "Error: %s (%li, %li, %li) invalid\n",
+                    type, coordinatePtr->x, coordinatePtr->y, coordinatePtr->z);
+            exit(1);
         }
     }
     grid_addPath(gridPtr, vectorPtr);
 }
-
-
-
 
 /* =============================================================================
  * maze_read

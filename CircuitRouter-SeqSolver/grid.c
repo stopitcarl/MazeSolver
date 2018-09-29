@@ -6,7 +6,7 @@
  *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Copyright (C) Stanford University, 2006.  All Rights Reserved.
- * Author: Chi Cao Minh 
+ * Author: Chi Cao Minh
  *
  * =============================================================================
  *
@@ -230,17 +230,22 @@ void grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr){
  * =============================================================================
  */
 void grid_print (grid_t* gridPtr){
-    // TODO implementar esta funcao
-    // Sugestão: usem as opções de formatação do output do printf para impor espaço fixo
-    int i , j;
+    long width  = gridPtr->width;
+    long height = gridPtr->height;
+    long depth  = gridPtr->depth;
+    long z;
 
-
-    for(j = 0; j < gridPtr->depth; j++){
-        
-        printf("[z = %d]", j);        
-        for(i = 0; i < gridPtr->width; i++) {            
-            printf("%4li", gridPtr->points[i]);
+    for (z = 0; z < depth; z++) {
+        printf("[z = %li]\n", z);
+        long x;
+        for (x = 0; x < width; x++) {
+            long y;
+            for (y = 0; y < height; y++) {
+                printf("%4li", *grid_getPointRef(gridPtr, x, y, z));
+            }
+            puts("");
         }
+        puts("");
     }
 }
 

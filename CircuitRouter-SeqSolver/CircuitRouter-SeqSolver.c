@@ -121,7 +121,7 @@ static void parseArgs (long argc, char* const argv[]){
 
     setDefaultParams();
 
-    while ((opt = getopt(argc, argv, "b:px:y:z:")) != -1) {
+    while ((opt = getopt(argc, argv, "hb:px:y:z:")) != -1) {
         switch (opt) {
             case 'b':
             case 'x':
