@@ -55,6 +55,7 @@
 #define MAZE_H 1
 
 
+#include <stdio.h>
 #include "coordinate.h"
 #include "grid.h"
 #include "lib/list.h"
@@ -91,7 +92,7 @@ void maze_free (maze_t* mazePtr);
  * -- Return number of path to route
  * =============================================================================
  */
-long maze_read (maze_t* mazePtr);
+long maze_read (maze_t* mazePtr, FILE * file);
 
 
 /* =============================================================================
