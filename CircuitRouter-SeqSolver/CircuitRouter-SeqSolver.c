@@ -159,10 +159,12 @@ int main(int argc, char** argv){
     /*
      * Initialization
      */
+	
+	 // TODO: (ex1) Will there be args besides the filename? (or will they be passed only to CircuitRouter-SimpleShell)
     parseArgs(argc, (char** const)argv);
     maze_t* mazePtr = maze_alloc();
     assert(mazePtr);
-
+		
     long numPathToRoute = maze_read(mazePtr);
     router_t* routerPtr = router_alloc(global_params[PARAM_XCOST],
                                        global_params[PARAM_YCOST],
