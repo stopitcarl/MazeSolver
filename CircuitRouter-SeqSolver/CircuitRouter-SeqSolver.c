@@ -149,7 +149,9 @@ static FILE * parseArgs(long argc, char* const argv[]) {
 		 displayUsage(argv[0]);
 	 }
 	 */
-
+	
+	setDefaultParams();
+	global_doPrint = TRUE;
 	// Argument check
 	assert(argc == 2);	
 	// Open file

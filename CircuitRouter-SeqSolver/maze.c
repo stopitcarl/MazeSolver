@@ -264,6 +264,7 @@ long maze_read(maze_t* mazePtr, FILE * file) {
 	}
 	list_free(workListPtr);
 
+	fclose(file);
 	return vector_getSize(srcVectorPtr);
 }
 
