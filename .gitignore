@@ -1,3 +1,4 @@
 *.o
 /CircuitRouter-SeqSolver/CircuitRouter-SeqSolver
 /.vs
+*.res

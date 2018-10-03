@@ -54,6 +54,9 @@
 #include <assert.h>
 #include <getopt.h>
 #include <stdio.h>
+#include <string.h>
+#include <fcntl.h>           /* Definition of AT_* constants */
+#include <unistd.h>
 #include <stdlib.h>
 #include "lib/list.h"
 #include "maze.h"
@@ -109,6 +112,34 @@ static void setDefaultParams() {
 }
 
 
+void createOutputFile(const char*fname) {
+	const char * ext = ".res";
+	const char * extOld = ".old";
+	char fullName[strlen(fname) + strlen(ext) + 1];
+	char fullNameOld[strlen(fullName) + strlen(extOld)];
+
+	// Create filename string
+	strcpy(fullName, fname);
+	strcat(fullName, ext);
+
+	// if file exists: rename
+	if (access(fullName, W_OK) != -1) {
+		assert(remove(fullName) == 0);
+
+		strcpy(fullNameOld, fullName);
+		strcat(fullNameOld, extOld);
+		if (access(fullNameOld, W_OK) != -1) { // if .old file exists
+			assert(remove(fullNameOld) == 0); //  ... delete it
+		}
+		assert(rename(fullName, fullNameOld) == 0);
+	}
+
+	// Create result file and direct stdout there	
+	freopen(fullName, "w", stdout);
+}
+
+
+
 /* =============================================================================
  * parseArgs
  * =============================================================================
@@ -149,16 +180,20 @@ static FILE * parseArgs(long argc, char* const argv[]) {
 		 displayUsage(argv[0]);
 	 }
 	 */
-	
+
 	setDefaultParams();
 	global_doPrint = TRUE;
+
 	// Argument check
-	assert(argc == 2);	
-	// Open file
-	const char modeToRead = 'r';
-	FILE * fileToRead = fopen(argv[1], &modeToRead);
-	assert(fileToRead);	
+	assert(argc == 2);
+
+	// Open file		
+	FILE * fileToRead = fopen(argv[1], "r");
+	assert(fileToRead);
+	createOutputFile(argv[1]);
 	return fileToRead;
+
+
 }
 
 
