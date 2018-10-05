@@ -109,32 +109,43 @@ static void setDefaultParams() {
 	global_params[PARAM_XCOST] = PARAM_DEFAULT_XCOST;
 	global_params[PARAM_YCOST] = PARAM_DEFAULT_YCOST;
 	global_params[PARAM_ZCOST] = PARAM_DEFAULT_ZCOST;
+	global_doPrint = TRUE;
 }
 
-
+/* =============================================================================
+ * createOutputFile
+ * =============================================================================
+ */
 void createOutputFile(const char*fname) {
-	const char * ext = ".res";
-	const char * extOld = ".old";
+	const char ext[] = ".res";
+	const char extOld[] = ".old";
 	char fullName[strlen(fname) + strlen(ext) + 1];
-	char fullNameOld[strlen(fullName) + strlen(extOld)];
+	char fullNameOld[strlen(fname) + strlen(ext) + strlen(extOld) + 1];
+
+	printf("Reached creation of output file\n");
 
 	// Create filename string
 	strcpy(fullName, fname);
 	strcat(fullName, ext);
 
+	printf("fullName: %s\n", fullName);	
+
 	// if file exists: rename
 	if (access(fullName, W_OK) != -1) {
-		assert(remove(fullName) == 0);
-
+		//assert(remove(fullName) == 0);
+		printf("fullName: %s\n", fullName);
 		strcpy(fullNameOld, fullName);
 		strcat(fullNameOld, extOld);
+		printf("fullName: %s\n", fullName);
+		printf("fullNameOld: %s\n", fullNameOld);
 		if (access(fullNameOld, W_OK) != -1) { // if .old file exists
 			assert(remove(fullNameOld) == 0); //  ... delete it
 		}
+		printf("Renaming %s to %s\n", fullName, fullNameOld);
 		assert(rename(fullName, fullNameOld) == 0);
 	}
 
-	// Create result file and direct stdout there	
+	// Create result file and redirect stdout there	
 	freopen(fullName, "w", stdout);
 }
 
@@ -144,56 +155,40 @@ void createOutputFile(const char*fname) {
  * parseArgs
  * =============================================================================
  */
-static FILE * parseArgs(long argc, char* const argv[]) {
-	/* long i;
-	 long opt;
+static FILE * parseArgs(long argc, char* const argv[]) {	
+	long opt;
+	FILE * fileToRead;
 
-	 opterr = 0;
-
-	 setDefaultParams();
-
-	 while ((opt = getopt(argc, argv, "hb:px:y:z:")) != -1) {
-		 switch (opt) {
-			 case 'b':
-			 case 'x':
-			 case 'y':
-			 case 'z':
-				 global_params[(unsigned char)opt] = atol(optarg);
-				 break;
-			 case 'p':
-				 global_doPrint = TRUE;
-				 break;
-			 case '?':
-			 case 'h':
-			 default:
-				 opterr++;
-				 break;
-		 }
-	 }
-
-	 for (i = optind; i < argc; i++) {
-		 fprintf(stderr, "Non-option argument: %s\n", argv[i]);
-		 opterr++;
-	 }
-
-	 if (opterr) {
-		 displayUsage(argv[0]);
-	 }
-	 */
+	opterr = 0;
 
 	setDefaultParams();
-	global_doPrint = TRUE;
 
-	// Argument check
-	assert(argc == 2);
+	while ((opt = getopt(argc, argv, "hb:x:y:z:")) != -1) {
+		switch (opt) {
+		case 'b':
+		case 'x':
+		case 'y':
+		case 'z':
+			global_params[(unsigned char)opt] = atol(optarg);
+			break;
+		case '?':
+		case 'h':
+		default:
+			opterr++;
+			break;
+		}
+	}
 
-	// Open file		
-	FILE * fileToRead = fopen(argv[1], "r");
+	if (opterr) {
+		displayUsage(argv[0]);
+	}
+
+	// If opt doesnt match options, assume it's the file name			
+	fileToRead = fopen(argv[optind], "r");
 	assert(fileToRead);
-	createOutputFile(argv[1]);
+	createOutputFile(argv[optind]);
+
 	return fileToRead;
-
-
 }
 
 
@@ -206,12 +201,12 @@ int main(int argc, char** argv) {
 	 * Initialization
 	 */
 
-	 // TODO: (ex1) Will there be args besides the filename? no
 	FILE * file = parseArgs(argc, (char** const)argv);
 	maze_t* mazePtr = maze_alloc();
 	assert(mazePtr);
 
 	long numPathToRoute = maze_read(mazePtr, file);
+	fclose(file);
 	router_t* routerPtr = router_alloc(global_params[PARAM_XCOST],
 		global_params[PARAM_YCOST],
 		global_params[PARAM_ZCOST],
