@@ -206,7 +206,7 @@ int main(int argc, char** argv) {
 	assert(mazePtr);
 
 	long numPathToRoute = maze_read(mazePtr, file);
-	fclose(file);
+	fclose(stdout);
 	router_t* routerPtr = router_alloc(global_params[PARAM_XCOST],
 		global_params[PARAM_YCOST],
 		global_params[PARAM_ZCOST],
