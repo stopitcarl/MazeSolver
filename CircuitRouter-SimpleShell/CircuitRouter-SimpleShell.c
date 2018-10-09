@@ -62,12 +62,29 @@ void storeProcess(int pid, int status) {
 }
 
 /* =============================================================================
+ * waitForThread: blocks untill thread is released (deprecated) TODO: erase this?
+ * =============================================================================
+ */
+void waitForThread() {
+	int status, pid;
+
+	while ((pid = waitpid(-1, &status, WNOHANG)) <= 0);
+	printf("process caught %d:%d\n", pid, status);
+	storeProcess(pid, status);
+	//--running_threads;
+}
+
+/* =============================================================================
  * main
  * =============================================================================
  */
 int main(int argc, char** argv) {
 	pid_t pid = 0;
-	int running = 1;
+	int child_pid = 0;
+	int status = 0;
+	int running = TRUE;
+	int available_threads = 2; // TODO: Get this for args
+	int running_threads = 0;
 
 	int numArgs = 0;
 	char cmdBuffer[MAXINPUT];
@@ -79,8 +96,15 @@ int main(int argc, char** argv) {
 	threadHistory->threadList = vector_alloc(10); // TODO: Read MAXCHILDREN num from args 
 
 
-	while (running) {
-		printf(">");
+	do {
+		// Catch a thread?
+		if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0) {
+			printf("process caught %d:%d\n", child_pid, status);
+			storeProcess(child_pid, status);
+			--running_threads;
+		}
+
+		printf(" >> ");
 		numArgs = readLineArguments(argsRead, NUMOFWORDS, cmdBuffer, MAXINPUT);
 		if (numArgs == -1) {
 			printf("readLineArguments encountered a problem\n");
@@ -93,9 +117,17 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		if (strcmp(argsRead[0], "exit")) {
+		// Exit 
+		if (strcmp(argsRead[0], "exit") == 0) {
+			running = FALSE; // TODO: redudant code?
 			break;
 		}
+		else // Check if there are available threads
+			if (running_threads == available_threads) {
+				printf("All threads are busy, please try later\n"); // TODO: block untill a thread is released?
+				continue;
+			}
+			else { ++running_threads; } // Update available threads
 
 		pid = fork();
 		if (pid < 0) {
@@ -103,21 +135,41 @@ int main(int argc, char** argv) {
 			continue;
 		}
 		else if (pid == 0) {
-			// child process			
-			printf("%s %s\n", argsRead[0], argsRead[1]);
+			// child process						
+			printf("child-> %s %s\n", argsRead[0], argsRead[1]); // TODO: launch SeqSolver
+			sleep(2);
 			exit(0);
 		}
 		else {
 			// parent process
-			signal(SIGCHLD, handleChild);
-			printf("i am the parent process\n");
+			//signal(SIGCHLD, handleChild); // TODO: choose between signal and waitpid
+			printf("parent process\n");
+		}
+
+		// catch a child (pedo comment is pedo)
+		do {
+			if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0) {
+				printf("process caught %d:%d\n", child_pid, status);
+				storeProcess(child_pid, status);
+				--running_threads;
+			}
+		} while (running_threads == 0);
+
+	} while (running);
+
+	while (running_threads > 0) {
+		if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0) {
+			printf("process caught %d:%d\n", child_pid, status);
+			storeProcess(child_pid, status);
+			--running_threads;
 		}
 	}
 
 	int i = vector_getSize(threadHistory->threadList);
+	printf("size is %d\n", i);
 	struct threadState *thread;
-	for (; i > 0; ++i) {
-		thread = (struct threadState*)vector_at(threadHistory->threadList, i);
+	for (; i > 0; --i) {
+		thread = (struct threadState*)vector_at(threadHistory->threadList, i - 1);
 		printf("pid: %d, state: %d\n", thread->pid, thread->state);
 	}
 
