@@ -4,3 +4,5 @@
 *.res
 *.old
 /CircuitRouter-SimpleShell/CircuitRouter-SimpleShell
+/CircuitRouter-SimpleShell/*.in
+*.log

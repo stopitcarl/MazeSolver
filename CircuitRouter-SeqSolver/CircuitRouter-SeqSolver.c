@@ -78,7 +78,7 @@ enum param_defaults {
 	PARAM_DEFAULT_ZCOST = 2,
 };
 
-bool_t global_doPrint = FALSE;
+bool_t global_doPrint = TRUE;
 char* global_inputFile = NULL;
 long global_params[256]; /* 256 = ascii limit */
 
@@ -122,28 +122,17 @@ void createOutputFile(const char*fname) {
 	char fullName[strlen(fname) + strlen(ext) + 1];
 	char fullNameOld[strlen(fname) + strlen(ext) + strlen(extOld) + 1];
 
-	// printf("Reached creation of output file\n");
-
-	// Create filename string
+	// Create filename (add .res)
 	strcpy(fullName, fname);
 	strcat(fullName, ext);
 
-	//printf("fullName: %s\n", fullName);	
-
-	// if file exists: rename
+	// if file exists: rename (add .old)
 	if (access(fullName, W_OK) != -1) {
-		//assert(remove(fullName) == 0);
-		//printf("fullName: %s\n", fullName);
 		strcpy(fullNameOld, fullName);
 		strcat(fullNameOld, extOld);
-		//printf("fullName: %s\n", fullName);
-		//printf("fullNameOld: %s\n", fullNameOld);
-		if (access(fullNameOld, W_OK) != -1) { // if .old file exists
-			assert(remove(fullNameOld) == 0); //  ... delete it
-		}
-		//printf("Renaming %s to %s\n", fullName, fullNameOld);
 		assert(rename(fullName, fullNameOld) == 0);
 	}
+
 
 	// Create result file and redirect stdout there	
 	freopen(fullName, "w", stdout);
@@ -155,7 +144,7 @@ void createOutputFile(const char*fname) {
  * parseArgs
  * =============================================================================
  */
-static FILE * parseArgs(long argc, char* const argv[]) {	
+static FILE * parseArgs(long argc, char* const argv[]) {
 	long opt;
 	FILE * fileToRead;
 
@@ -197,16 +186,17 @@ static FILE * parseArgs(long argc, char* const argv[]) {
  * =============================================================================
  */
 int main(int argc, char** argv) {
-	/*
-	 * Initialization
-	 */
 
+	// Redirect error messages
+	freopen("stderr.log", "w", stderr);
+
+	// Open file
 	FILE * file = parseArgs(argc, (char** const)argv);
 	maze_t* mazePtr = maze_alloc();
 	assert(mazePtr);
-
+	// Read maze from file
 	long numPathToRoute = maze_read(mazePtr, file);
-	fclose(stdout);
+	fclose(file);
 	router_t* routerPtr = router_alloc(global_params[PARAM_XCOST],
 		global_params[PARAM_YCOST],
 		global_params[PARAM_ZCOST],
@@ -215,6 +205,7 @@ int main(int argc, char** argv) {
 	list_t* pathVectorListPtr = list_alloc(NULL);
 	assert(pathVectorListPtr);
 
+	// Solve maze
 	router_solve_arg_t routerArg = { routerPtr, mazePtr, pathVectorListPtr };
 	TIMER_T startTime;
 	TIMER_READ(startTime);
@@ -235,9 +226,8 @@ int main(int argc, char** argv) {
 	printf("Elapsed time    = %f seconds\n", TIMER_DIFF_SECONDS(startTime, stopTime));
 
 
-	/*
-	 * Check solution and clean up
-	 */
+
+	// Check solution and clean up
 	assert(numPathRouted <= numPathToRoute);
 	bool_t status = maze_checkPaths(mazePtr, pathVectorListPtr, global_doPrint);
 	assert(status == TRUE);
@@ -258,10 +248,8 @@ int main(int argc, char** argv) {
 	}
 	list_free(pathVectorListPtr);
 
-
 	exit(0);
 }
-
 
 /* =============================================================================
  *
