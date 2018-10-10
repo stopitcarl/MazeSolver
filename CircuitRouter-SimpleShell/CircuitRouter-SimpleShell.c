@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/types.h>
@@ -20,145 +21,139 @@
 #include "lib/commandlinereader.h"
 #include "lib/vector.h"
 
-struct threads {
-	vector_t * threadList;
-	int lock;
+struct threads
+{
+	vector_t *threadList;
 };
 
-struct threadState {
+struct threadState
+{
 	int state;
 	pid_t pid;
 };
 
-struct threads * threadHistory; // TODO: static variable okay to use? better options?
-
-
+struct threads *threadHistory; // TODO: static variable okay to use? better options?
 
 void storeProcess(int pid, int status);
-
-
-/* =============================================================================
- * handleChild
- * =============================================================================
- */
-void handleChild(int signum) {
-	int status = 0;
-	int pid = 0;
-	// int pid = wait(&status);
-	while ((pid = waitpid(-1, &status, WNOHANG)) <= 0); // TODO: way to get pid from waitpid?
-	storeProcess(pid, status);
-}
-
 
 /* =============================================================================
  * storeProcess : Stores process info for later consumption
  * =============================================================================
  */
-void storeProcess(int pid, int status) {
-	struct threadState *  process = malloc(sizeof(struct threadState));
+void storeProcess(int pid, int status)
+{
+	struct threadState *process = malloc(sizeof(struct threadState));
 	process->state = status;
 	process->pid = pid;
 	assert(vector_pushBack(threadHistory->threadList, process) == TRUE);
 }
 
 /* =============================================================================
- * waitForThread: blocks untill thread is released (deprecated) TODO: erase this?
- * =============================================================================
- */
-void waitForThread() {
-	int status, pid;
-
-	while ((pid = waitpid(-1, &status, WNOHANG)) <= 0);
-	printf("process caught %d:%d\n", pid, status);
-	storeProcess(pid, status);
-	//--running_threads;
-}
-
-/* =============================================================================
  * main
  * =============================================================================
  */
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
 	pid_t pid = 0;
 	int child_pid = 0;
 	int status = 0;
 	int running = TRUE;
-	int available_threads = 2; // TODO: Get this for args
+	int available_threads = 0; // TODO: Get this from args
 	int running_threads = 0;
 
 	int numArgs = 0;
 	char cmdBuffer[MAXINPUT];
 	char *argsRead[NUMOFWORDS];
 
-	// Create thread history storage	
+	// Check if args were passed
+	if (argc == 2 && (available_threads = strtoumax(argv[1], NULL, 10)))
+	{
+		printf("MAXTHREADS are %d\n", available_threads);
+	}
+	else
+	{
+		available_threads = -1;
+	}
+
+	// Create thread history storage
 	threadHistory = malloc(sizeof(struct threads));
-	threadHistory->lock = 0;
-	threadHistory->threadList = vector_alloc(10); // TODO: Read MAXCHILDREN num from args 
+	threadHistory->threadList = vector_alloc(10); // TODO: Read MAXCHILDREN num from args
 
+	do
+	{
 
-	do {
+		// Read args from input
+		printf(" >> ");
+		numArgs = readLineArguments(argsRead, NUMOFWORDS, cmdBuffer, MAXINPUT);
+		if (numArgs == -1)
+		{
+			printf("readLineArguments encountered a problem\n");
+			continue;
+		}
+		else if (numArgs == 0)
+		{
+			continue;
+		}
+
 		// Catch a thread?
-		if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0) {
+		if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0)
+		{
 			printf("process caught %d:%d\n", child_pid, status);
 			storeProcess(child_pid, status);
 			--running_threads;
 		}
 
-		printf(" >> ");
-		numArgs = readLineArguments(argsRead, NUMOFWORDS, cmdBuffer, MAXINPUT);
-		if (numArgs == -1) {
-			printf("readLineArguments encountered a problem\n");
-			continue;
-		}
-		else {
-			int i = 0;
-			for (i = 0; i < numArgs; i++) {
-				printf("%i: %s\n", i, argsRead[i]);
-			}
-		}
-
-		// Exit 
-		if (strcmp(argsRead[0], "exit") == 0) {
+		// Exit
+		if (strcmp(argsRead[0], "exit") == 0)
+		{
 			running = FALSE; // TODO: redudant code?
 			break;
 		}
 		else // Check if there are available threads
-			if (running_threads == available_threads) {
-				printf("All threads are busy, please try later\n"); // TODO: block untill a thread is released?
-				continue;
-			}
-			else { ++running_threads; } // Update available threads
+			if (running_threads == available_threads)
+		{
+			printf("All threads are busy, please try later\n"); // TODO: block untill a thread is released?
+			continue;
+		}
 
 		pid = fork();
-		if (pid < 0) {
+		if (pid < 0)
+		{
 			printf("Unable to fork\n");
 			continue;
 		}
-		else if (pid == 0) {
-			// child process						
-			printf("child-> %s %s\n", argsRead[0], argsRead[1]); // TODO: launch SeqSolver
-			sleep(2);
+		else if (pid == 0) // child process
+		{
+
+			if (!(numArgs == 2 && strcmp(argsRead[0], "run") == 0))
+			{
+			}
+			char *args[] = {"./CircuitRouter-SeqSolver", argsRead[1], NULL};
+
+			if (execv("../CircuitRouter-SeqSolver/", args) == -1)
+			{
+				exit(1);
+			}
+			int i = 0;
+			for (i = 0; i < numArgs; i++)
+			{
+				//printf("%i: %s\n", i, argsRead[i]);
+			}
 			exit(0);
 		}
-		else {
+		else
+		{
 			// parent process
+			++running_threads;
 			//signal(SIGCHLD, handleChild); // TODO: choose between signal and waitpid
-			printf("parent process\n");
 		}
-
-		// catch a child (pedo comment is pedo)
-		do {
-			if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0) {
-				printf("process caught %d:%d\n", child_pid, status);
-				storeProcess(child_pid, status);
-				--running_threads;
-			}
-		} while (running_threads == 0);
-
 	} while (running);
 
-	while (running_threads > 0) {
-		if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0) {
+	// Catch all running threads
+	while (running_threads > 0)
+	{
+		if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0)
+		{
 			printf("process caught %d:%d\n", child_pid, status);
 			storeProcess(child_pid, status);
 			--running_threads;
@@ -166,11 +161,12 @@ int main(int argc, char** argv) {
 	}
 
 	int i = vector_getSize(threadHistory->threadList);
-	printf("size is %d\n", i);
 	struct threadState *thread;
-	for (; i > 0; --i) {
-		thread = (struct threadState*)vector_at(threadHistory->threadList, i - 1);
-		printf("pid: %d, state: %d\n", thread->pid, thread->state);
+	for (; i > 0; --i)
+	{
+		thread = (struct threadState *)vector_at(threadHistory->threadList, i - 1);
+		printf("CHILD EXITED (PID=%d; return %s\n", thread->pid, thread->state == 0 ? "OK" : "NOK");
+		free(thread);
 	}
 
 	// TODO: free memory
@@ -179,7 +175,6 @@ int main(int argc, char** argv) {
 
 	exit(0);
 }
-
 
 /* =============================================================================
  *

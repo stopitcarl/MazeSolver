@@ -122,26 +122,26 @@ void createOutputFile(const char*fname) {
 	char fullName[strlen(fname) + strlen(ext) + 1];
 	char fullNameOld[strlen(fname) + strlen(ext) + strlen(extOld) + 1];
 
-	printf("Reached creation of output file\n");
+	// printf("Reached creation of output file\n");
 
 	// Create filename string
 	strcpy(fullName, fname);
 	strcat(fullName, ext);
 
-	printf("fullName: %s\n", fullName);	
+	//printf("fullName: %s\n", fullName);	
 
 	// if file exists: rename
 	if (access(fullName, W_OK) != -1) {
 		//assert(remove(fullName) == 0);
-		printf("fullName: %s\n", fullName);
+		//printf("fullName: %s\n", fullName);
 		strcpy(fullNameOld, fullName);
 		strcat(fullNameOld, extOld);
-		printf("fullName: %s\n", fullName);
-		printf("fullNameOld: %s\n", fullNameOld);
+		//printf("fullName: %s\n", fullName);
+		//printf("fullNameOld: %s\n", fullNameOld);
 		if (access(fullNameOld, W_OK) != -1) { // if .old file exists
 			assert(remove(fullNameOld) == 0); //  ... delete it
 		}
-		printf("Renaming %s to %s\n", fullName, fullNameOld);
+		//printf("Renaming %s to %s\n", fullName, fullNameOld);
 		assert(rename(fullName, fullNameOld) == 0);
 	}
 
