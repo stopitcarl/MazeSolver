@@ -1,1 +1,0 @@
-fix makefile: add lib/vector dependencie

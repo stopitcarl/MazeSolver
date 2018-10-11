@@ -21,16 +21,14 @@
 #include "lib/commandlinereader.h"
 #include "lib/vector.h"
 
-struct tasks {
-	vector_t *taskList;
-};
+
 
 struct taskState {
 	int state;
 	pid_t pid;
 };
 
-struct tasks *taskHistory;
+vector_t *taskHistory;
 int running_tasks;
 
 
@@ -42,7 +40,7 @@ void storetask(int pid, int status) {
 	struct taskState *task = malloc(sizeof(struct taskState));
 	task->state = status;
 	task->pid = pid;
-	assert(vector_pushBack(taskHistory->taskList, task) == TRUE);
+	assert(vector_pushBack(taskHistory, task) == TRUE);
 }
 
 /* =============================================================================
@@ -69,7 +67,7 @@ int main(int argc, char **argv) {
 	int child_pid = 0;
 	int status = 0;
 	int running = TRUE;
-	int available_task = 0; // TODO: Get this from args
+	int available_tasks = 0; // TODO: Get this from args
 	running_tasks = 0;
 
 	int numArgs = 0;
@@ -77,21 +75,27 @@ int main(int argc, char **argv) {
 	char *argsRead[NUMOFWORDS];
 
 	// Check if args were passed
-	if (argc == 2 && (available_task = strtoumax(argv[1], NULL, 10))) {
-		// printf("MAXtaskS are %d\n", available_task);
+	if (argc == 2 && (available_tasks = strtoumax(argv[1], NULL, 10))) {
+		if (available_tasks == 0) {
+			available_tasks = -1;
+		}
+		// printf("MAXCHILDREN are %d\n", available_tasks);
 	}
-	else { available_task = -1; /* infinite tasks */ }
+	else {
+		available_tasks = -1; // no args provided -> infinite tasks 
+	}
 
-	// Create task history storage
-	taskHistory = malloc(sizeof(struct tasks));
-	taskHistory->taskList = vector_alloc(10); // TODO: Read MAXCHILDREN num from args
+	// Create task history storage	
+	taskHistory = vector_alloc(10); // TODO: Read MAXCHILDREN num from args
+	assert(taskHistory);
 
+	// Shell loop
 	do {
 		// Read args from input
-		printf(">> ");
+		printf(">>> ");
 		numArgs = readLineArguments(argsRead, NUMOFWORDS, cmdBuffer, MAXINPUT);
 		if (numArgs == -1) {
-			printf("readLineArguments encountered a problem\n");
+			printf("Couldn't read input.\n");
 			continue;
 		}
 		else if (numArgs == 0) {
@@ -107,17 +111,17 @@ int main(int argc, char **argv) {
 
 		// Exit
 		if (strcmp(argsRead[0], "exit") == 0) {
-			running = FALSE; // TODO: redudant code?
+			running = FALSE; // TODO: redudant code?  (may use later)
 			break;
 		}
 		else if (strcmp(argsRead[0], "run") == 0) {
 
-			if (running_tasks == available_task) {
+			if (running_tasks == available_tasks) {
 				printf("All threads are busy. Waiting for a task to end\n");
 				waitForChild(); // block untill any child task is finished							
 				printf("Starting your task\n");
 			}
-			++running_tasks;
+
 			pid = fork();
 			if (pid < 0) {
 				printf("Unable to fork\n");
@@ -133,9 +137,13 @@ int main(int argc, char **argv) {
 					exit(1);
 				}
 			}
+			else { // parent task
+				++running_tasks;
+			}
 		}
 		else { printf("Unknown command.\n"); }
 	} while (running);
+
 
 	// Catch all remaining running tasks
 	while (running_tasks > 0) {
@@ -147,18 +155,17 @@ int main(int argc, char **argv) {
 	}
 
 	int i;
-	int j = vector_getSize(taskHistory->taskList);
+	int j = vector_getSize(taskHistory);
 	struct taskState *task;
 	for (i = 0; i < j; ++i) {
-		task = (struct taskState *)vector_at(taskHistory->taskList, i);
+		task = (struct taskState *)vector_at(taskHistory, i);
 		printf("CHILD EXITED (PID=%d; return %s)\n", task->pid, task->state == 0 ? "OK" : "NOK");
 		free(task);
 	}
 	puts("End");
 
 	// Free remaining memory
-	vector_free(taskHistory->taskList);
-	free(taskHistory);
+	vector_free(taskHistory);
 
 	exit(0);
 }

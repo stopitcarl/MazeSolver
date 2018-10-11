@@ -134,7 +134,7 @@ void createOutputFile(const char*fname) {
 	}
 
 
-	// Create result file and redirect stdout there	
+	// Create result file and redirect stdout there
 	freopen(fullName, "w", stdout);
 }
 
@@ -188,7 +188,7 @@ static FILE * parseArgs(long argc, char* const argv[]) {
 int main(int argc, char** argv) {
 
 	// Redirect error messages
-	freopen("stderr.log", "w", stderr);
+	freopen("stderr.log", "a", stderr); // dont erase previous stderr info (for better debugging)
 
 	// Open file
 	FILE * file = parseArgs(argc, (char** const)argv);
