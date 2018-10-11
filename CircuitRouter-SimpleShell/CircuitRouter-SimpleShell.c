@@ -21,28 +21,28 @@
 #include "lib/commandlinereader.h"
 #include "lib/vector.h"
 
-struct threads {
-	vector_t *threadList;
+struct tasks {
+	vector_t *taskList;
 };
 
-struct threadState {
+struct taskState {
 	int state;
 	pid_t pid;
 };
 
-struct threads *threadHistory; // TODO: static variable okay to use? better options?
-int running_threads;
+struct tasks *taskHistory;
+int running_tasks;
 
 
 /* =============================================================================
- * storeProcess : Stores process info for later consumption
+ * storetask : Stores task info for later consumption
  * =============================================================================
  */
-void storeProcess(int pid, int status) {
-	struct threadState *process = malloc(sizeof(struct threadState));
-	process->state = status;
-	process->pid = pid;
-	assert(vector_pushBack(threadHistory->threadList, process) == TRUE);
+void storetask(int pid, int status) {
+	struct taskState *task = malloc(sizeof(struct taskState));
+	task->state = status;
+	task->pid = pid;
+	assert(vector_pushBack(taskHistory->taskList, task) == TRUE);
 }
 
 /* =============================================================================
@@ -51,11 +51,10 @@ void storeProcess(int pid, int status) {
  */
 void waitForChild() {
 	int child_pid = 0, status = 0;
-	while ((child_pid = waitpid(-1, &status, WNOHANG)) > -1) { // while there's processes running
+	while ((child_pid = waitpid(-1, &status, WNOHANG)) > -1) { // while there's tasks running
 		if (child_pid > 0) {
-			printf("process caught %d:%d\n", child_pid, status);
-			storeProcess(child_pid, status);
-			--running_threads;
+			storetask(child_pid, status);
+			--running_tasks;
 			return;
 		}
 	}
@@ -70,29 +69,26 @@ int main(int argc, char **argv) {
 	int child_pid = 0;
 	int status = 0;
 	int running = TRUE;
-	int available_threads = 0; // TODO: Get this from args
-	running_threads = 0;
+	int available_task = 0; // TODO: Get this from args
+	running_tasks = 0;
 
 	int numArgs = 0;
 	char cmdBuffer[MAXINPUT];
 	char *argsRead[NUMOFWORDS];
 
 	// Check if args were passed
-	if (argc == 2 && (available_threads = strtoumax(argv[1], NULL, 10))) {
-		printf("MAXTHREADS are %d\n", available_threads);
+	if (argc == 2 && (available_task = strtoumax(argv[1], NULL, 10))) {
+		// printf("MAXtaskS are %d\n", available_task);
 	}
-	else {
-		available_threads = -1; // infinite threads
-	}
+	else { available_task = -1; /* infinite tasks */ }
 
-	// Create thread history storage
-	threadHistory = malloc(sizeof(struct threads));
-	threadHistory->threadList = vector_alloc(10); // TODO: Read MAXCHILDREN num from args
+	// Create task history storage
+	taskHistory = malloc(sizeof(struct tasks));
+	taskHistory->taskList = vector_alloc(10); // TODO: Read MAXCHILDREN num from args
 
 	do {
-
 		// Read args from input
-		printf(" >> ");
+		printf(">> ");
 		numArgs = readLineArguments(argsRead, NUMOFWORDS, cmdBuffer, MAXINPUT);
 		if (numArgs == -1) {
 			printf("readLineArguments encountered a problem\n");
@@ -102,11 +98,11 @@ int main(int argc, char **argv) {
 			continue;
 		}
 
-		// Catch a thread
+		// Catch a task
 		if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0) {
-			// printf("process caught %d:%d\n", child_pid, status);
-			storeProcess(child_pid, status);
-			--running_threads;
+			// printf("task caught %d:%d\n", child_pid, status);
+			storetask(child_pid, status);
+			--running_tasks;
 		}
 
 		// Exit
@@ -116,54 +112,53 @@ int main(int argc, char **argv) {
 		}
 		else if (strcmp(argsRead[0], "run") == 0) {
 
-			if (running_threads == available_threads) {// Check if there are available threads
-				waitForChild(); // block untill any child process is finished								
+			if (running_tasks == available_task) {
+				printf("All threads are busy. Waiting for a task to end\n");
+				waitForChild(); // block untill any child task is finished							
+				printf("Starting your task\n");
 			}
-			++running_threads;
+			++running_tasks;
 			pid = fork();
 			if (pid < 0) {
 				printf("Unable to fork\n");
+				--running_tasks;
 				continue;
 			}
-			else if (pid == 0) { // child process
+			else if (pid == 0) { // child task
 				if (!(numArgs == 2 && strcmp(argsRead[0], "run") == 0)) {
 					exit(1);
 				}
 				char *args[] = { "./CircuitRouter-SeqSolver", argsRead[1], NULL };
-
 				if (execv("../CircuitRouter-SeqSolver/./CircuitRouter-SeqSolver", args) == -1) {
 					exit(1);
 				}
 			}
 		}
-		else {
-			printf("Unknown command.\n");
-		}
+		else { printf("Unknown command.\n"); }
 	} while (running);
 
-	// Catch all remaining running threads
-	while (running_threads > 0)
-	{
+	// Catch all remaining running tasks
+	while (running_tasks > 0) {
 		if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0)
 		{
-			printf("process caught %d:%d\n", child_pid, status);
-			storeProcess(child_pid, status);
-			--running_threads;
+			storetask(child_pid, status);
+			--running_tasks;
 		}
 	}
 
 	int i;
-	int j = vector_getSize(threadHistory->threadList);
-	struct threadState *thread;
+	int j = vector_getSize(taskHistory->taskList);
+	struct taskState *task;
 	for (i = 0; i < j; ++i) {
-		thread = (struct threadState *)vector_at(threadHistory->threadList, i);
-		printf("CHILD EXITED (PID=%d; return %s)\n", thread->pid, thread->state == 0 ? "OK" : "NOK");
-		free(thread);
+		task = (struct taskState *)vector_at(taskHistory->taskList, i);
+		printf("CHILD EXITED (PID=%d; return %s)\n", task->pid, task->state == 0 ? "OK" : "NOK");
+		free(task);
 	}
+	puts("End");
 
 	// Free remaining memory
-	vector_free(threadHistory->threadList);
-	free(threadHistory);
+	vector_free(taskHistory->taskList);
+	free(taskHistory);
 
 	exit(0);
 }
