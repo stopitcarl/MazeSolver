@@ -11,7 +11,8 @@ TARGET = CircuitRouter-SimpleShell
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $^ -o $(TARGET) $(LDFLAGS) 
+	$(CC) $(CFLAGS) $^ -o $(TARGET) $(LDFLAGS)
+	 cd ../CircuitRouter-SeqSolver && make
 
 CircuitRouter-SimpleShell.o: CircuitRouter-SimpleShell.c ../lib/commandlinereader.h ../lib/commandlinereader.h
 ../lib/commandlinereader.o: ../lib/commandlinereader.c ../lib/commandlinereader.h

@@ -111,11 +111,11 @@ int main(int argc, char **argv) {
 
 		// Exit
 		if (strcmp(argsRead[0], "exit") == 0) {
-			running = FALSE; // TODO: redudant code?  (may use later)
+			running = FALSE; // redudant code?  (may use later)
 			break;
 		}
 		else if (strcmp(argsRead[0], "run") == 0) {
-
+			if (numArgs < 2) { printf("No input file specified\n"); continue; }
 			if (running_tasks == available_tasks) {
 				printf("All threads are busy. Waiting for a task to end\n");
 				waitForChild(); // block untill any child task is finished							
