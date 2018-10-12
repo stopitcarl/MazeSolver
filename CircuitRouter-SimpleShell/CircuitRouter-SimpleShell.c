@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
 	int child_pid = 0;
 	int status = 0;
 	int running = TRUE;
-	int available_tasks = 0; // TODO: Get this from args
+	int available_tasks = 0;
 	running_tasks = 0;
 
 	int numArgs = 0;
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 	}
 
 	// Create task history storage	
-	taskHistory = vector_alloc(10); // TODO: Read MAXCHILDREN num from args
+	taskHistory = vector_alloc(available_tasks > 0 ? available_tasks * 2 : 8);
 	assert(taskHistory);
 
 	// Shell loop

@@ -165,7 +165,7 @@ long maze_read(maze_t* mazePtr, FILE * file) {
 	vector_t* srcVectorPtr = mazePtr->srcVectorPtr;
 	vector_t* dstVectorPtr = mazePtr->dstVectorPtr;
 
-	// TODO: (ex1) change stdin to file passed as argument
+
 	while (fgets(line, sizeof(line), file)) {
 
 		char code;
