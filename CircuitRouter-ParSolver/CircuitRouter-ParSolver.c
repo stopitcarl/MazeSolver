@@ -124,12 +124,11 @@ static FILE * parseArgs(long argc, char* const argv[]) {
 		displayUsage(argv[0]);
 	}
 
-	printf("args parsing\n");
+	assert(MAX_THREADS != 0);
 	// If opt doesnt match options, assume it's the file name			
 	fileToRead = fopen(argv[optind], "r");
 	assert(fileToRead);
-	// createOutputFile(argv[optind]);
-	printf("args parsed\n");
+	// createOutputFile(argv[optind]);	
 	return fileToRead;
 }
 
