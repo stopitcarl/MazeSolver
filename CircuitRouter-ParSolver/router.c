@@ -58,6 +58,7 @@
 #include "lib/queue.h"
 #include "router.h"
 #include "lib/vector.h"
+#include "lib/mutex.h"
 
 
 typedef enum momentum {
@@ -292,10 +293,7 @@ static vector_t* doTraceback (grid_t* gridPtr, grid_t* myGridPtr, coordinate_t* 
  * router_solve
  * =============================================================================
  */
-void router_solve (void* argPtr){
-
-	printf("Solving...\n");
-	return;
+void * router_solve (void* argPtr){
 
     router_solve_arg_t* routerArgPtr = (router_solve_arg_t*)argPtr;
     router_t* routerPtr = routerArgPtr->routerPtr;
@@ -317,6 +315,7 @@ void router_solve (void* argPtr){
     while (1) {
 
         pair_t* coordinatePairPtr;
+        queue_lock();
         if (queue_isEmpty(workQueuePtr)) {
             coordinatePairPtr = NULL;
         } else {
@@ -325,6 +324,7 @@ void router_solve (void* argPtr){
         if (coordinatePairPtr == NULL) {
             break;
         }
+        queue_unlock();
 
         coordinate_t* srcPtr = coordinatePairPtr->firstPtr;
         coordinate_t* dstPtr = coordinatePairPtr->secondPtr;
@@ -339,8 +339,9 @@ void router_solve (void* argPtr){
                          srcPtr, dstPtr)) {
             pointVectorPtr = doTraceback(gridPtr, myGridPtr, dstPtr, bendCost);
             if (pointVectorPtr) {
+                grid_mutex_lock();
                 grid_addPath_Ptr(gridPtr, pointVectorPtr);
-
+                grid_mutex_unlock();
                 success = TRUE;
             }
         }
@@ -360,6 +361,8 @@ void router_solve (void* argPtr){
 
     grid_free(myGridPtr);
     queue_free(myExpansionQueuePtr);
+    
+    return NULL;
 }
 
 
