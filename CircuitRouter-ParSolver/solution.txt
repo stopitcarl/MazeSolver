@@ -1,0 +1,3 @@
+2 mutex:
+	1 mutex - working queue (pontos a resolver, acesso scinrozado)
+	1 mutex - grid-add-path (semaforo)
