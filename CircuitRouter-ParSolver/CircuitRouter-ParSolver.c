@@ -159,8 +159,7 @@ int main(int argc, char **argv)
 	assert(mazePtr);
 
 	// Read maze from file
-	long numPathToRoute = maze_read(mazePtr, file);
-	fclose(file);
+	long numPathToRoute = maze_read(mazePtr, file);	
 	router_t *routerPtr = router_alloc(global_params[PARAM_XCOST],
 									   global_params[PARAM_YCOST],
 									   global_params[PARAM_ZCOST],
