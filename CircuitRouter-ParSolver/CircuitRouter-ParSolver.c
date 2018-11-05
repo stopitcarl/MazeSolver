@@ -88,7 +88,7 @@ void createOutputFile(const char *fname)
 	}
 
 	// Create result file and redirect stdout there
-	freopen(fullName, "w", stdout);
+	//freopen(fullName, "w", stdout);
 }
 
 /* =============================================================================
@@ -134,13 +134,9 @@ static FILE *parseArgs(long argc, char *const argv[])
 	fileToRead = fopen(argv[optind], "r");
 	assert(fileToRead);
 	createOutputFile(argv[optind]);
-	return fileToRead;
-}
 
-void *threadWork(void *arg)
-{
-	printf("Thread: %ld\n", *((pthread_t *)arg));
-	return NULL;
+	printf("args parsed\n");
+	return fileToRead;
 }
 
 /* =============================================================================
@@ -159,30 +155,34 @@ int main(int argc, char **argv)
 	assert(mazePtr);
 
 	// Read maze from file
-	long numPathToRoute = maze_read(mazePtr, file);	
+	long numPathToRoute = maze_read(mazePtr, file);
 	router_t *routerPtr = router_alloc(global_params[PARAM_XCOST],
-									   global_params[PARAM_YCOST],
-									   global_params[PARAM_ZCOST],
-									   global_params[PARAM_BENDCOST]);
+		global_params[PARAM_YCOST],
+		global_params[PARAM_ZCOST],
+		global_params[PARAM_BENDCOST]);
 	assert(routerPtr);
 	list_t *pathVectorListPtr = list_alloc(NULL);
 	assert(pathVectorListPtr);
 
 	// Solve maze
-	router_solve_arg_t routerArg = {routerPtr, mazePtr, pathVectorListPtr};
+	router_solve_arg_t routerArg = { routerPtr, mazePtr, pathVectorListPtr };
 	TIMER_T startTime;
 	TIMER_READ(startTime);
 
-	queue_init();
+	queue_mutex_init();
 	grid_mutex_init();
-	pthread_t thread_id = 0;
+	pthread_t thread_id[MAX_THREADS];
+	printf("thread creation\n");
 	int i = 0;
 	for (; i < MAX_THREADS; i++)
 	{
-		pthread_create(&thread_id, NULL, router_solve, (void *)&routerArg);
+		pthread_create(&thread_id[i], NULL, router_solve, (void *)&routerArg);
 	}
 
-	pthread_join(thread_id, NULL);
+	for (i = 0; i < MAX_THREADS; i++)
+	{
+		pthread_join(thread_id[i], NULL);
+	}
 
 	//router_solve((void *)&routerArg);
 

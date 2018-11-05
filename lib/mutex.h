@@ -8,9 +8,9 @@
 
 // TODO: Change function names for consistency
 
-void queue_init();
-void queue_lock ();
-void queue_unlock();
+void queue_mutex_init();
+void queue_mutex_lock ();
+void queue_mutex_unlock();
 
 
 void grid_mutex_init();
