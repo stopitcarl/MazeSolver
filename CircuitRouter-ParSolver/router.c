@@ -248,7 +248,8 @@ static vector_t* doTraceback(grid_t* gridPtr, grid_t* myGridPtr, coordinate_t* d
 		}
 		point_t curr = next;
 
-		/*
+		// TODO: Eliminate extra check
+		/* 
 		 * Check 6 neighbors
 		 *
 		 * Potential Optimization: Only need to check 5 of these
@@ -343,9 +344,9 @@ void * router_solve(void* argPtr) {
 			srcPtr, dstPtr)) {
 			pointVectorPtr = doTraceback(gridPtr, myGridPtr, dstPtr, bendCost);
 			if (pointVectorPtr) {
-				grid_mutex_lock();
+				grid_mutex_lock(pointVectorPtr);
 				grid_addPath_Ptr(gridPtr, pointVectorPtr);
-				grid_mutex_unlock();
+				grid_mutex_unlock(pointVectorPtr);
 				success = TRUE;
 			}
 		}
@@ -360,9 +361,10 @@ void * router_solve(void* argPtr) {
 	/*
 	 * Add my paths to global list
 	 */
+	// TODO: lock pathVectorListPtr
 	list_t* pathVectorListPtr = routerArgPtr->pathVectorListPtr;
 	list_insert(pathVectorListPtr, (void*)myPathVectorPtr);
-
+	// TODO: unlock
 	grid_free(myGridPtr);
 	queue_free(myExpansionQueuePtr);
 

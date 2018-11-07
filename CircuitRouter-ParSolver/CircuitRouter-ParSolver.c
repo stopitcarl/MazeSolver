@@ -88,7 +88,7 @@ void createOutputFile(const char *fname)
 	}
 
 	// Create result file and redirect stdout there
-	//freopen(fullName, "w", stdout);
+	freopen(fullName, "w", stdout);
 }
 
 /* =============================================================================
@@ -99,7 +99,6 @@ static FILE *parseArgs(long argc, char *const argv[])
 {
 	long opt;
 	FILE *fileToRead;
-	printf("parsing args...\n");
 	opterr = 0;
 
 	setDefaultParams();
@@ -157,32 +156,28 @@ int main(int argc, char **argv)
 	// Read maze from file
 	long numPathToRoute = maze_read(mazePtr, file);
 	router_t *routerPtr = router_alloc(global_params[PARAM_XCOST],
-		global_params[PARAM_YCOST],
-		global_params[PARAM_ZCOST],
-		global_params[PARAM_BENDCOST]);
+									   global_params[PARAM_YCOST],
+									   global_params[PARAM_ZCOST],
+									   global_params[PARAM_BENDCOST]);
 	assert(routerPtr);
 	list_t *pathVectorListPtr = list_alloc(NULL);
 	assert(pathVectorListPtr);
 
 	// Solve maze
-	router_solve_arg_t routerArg = { routerPtr, mazePtr, pathVectorListPtr };
+	router_solve_arg_t routerArg = {routerPtr, mazePtr, pathVectorListPtr};
 	TIMER_T startTime;
 	TIMER_READ(startTime);
 
 	queue_mutex_init();
 	grid_mutex_init();
-	pthread_t thread_id[MAX_THREADS];
+	pthread_t thread_id[MAX_THREADS]; // thread list
 	printf("thread creation\n");
 	int i = 0;
 	for (; i < MAX_THREADS; i++)
-	{
 		pthread_create(&thread_id[i], NULL, router_solve, (void *)&routerArg);
-	}
 
 	for (i = 0; i < MAX_THREADS; i++)
-	{
 		pthread_join(thread_id[i], NULL);
-	}
 
 	//router_solve((void *)&routerArg);
 
