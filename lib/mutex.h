@@ -14,8 +14,8 @@ void queue_mutex_unlock();
 
 
 void grid_mutex_init();
-void grid_mutex_lock ();
-void grid_mutex_unlock();
+void grid_mutex_lock (vector_t* points);
+void grid_mutex_unlock(vector_t* points);
 
 
 /* =============================================================================
