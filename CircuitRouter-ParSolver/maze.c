@@ -318,6 +318,7 @@ bool_t maze_checkPaths(maze_t* mazePtr, list_t* pathVectorListPtr, bool_t doPrin
 			grid_getPointIndices(gridPtr, prevGridPointPtr, &x, &y, &z);
 			if (grid_getPoint(testGridPtr, x, y, z) != 0) {
 				grid_free(testGridPtr);
+				printf("3\n");
 				return FALSE;
 			}
 			coordinate_t prevCoordinate;
@@ -338,6 +339,7 @@ bool_t maze_checkPaths(maze_t* mazePtr, list_t* pathVectorListPtr, bool_t doPrin
 					&currCoordinate.z);
 				if (!coordinate_areAdjacent(&currCoordinate, &prevCoordinate)) {
 					grid_free(testGridPtr);
+					printf("4\n");
 					return FALSE;
 				}
 				prevCoordinate = currCoordinate;
@@ -346,6 +348,8 @@ bool_t maze_checkPaths(maze_t* mazePtr, list_t* pathVectorListPtr, bool_t doPrin
 				long z = currCoordinate.z;
 				if (grid_getPoint(testGridPtr, x, y, z) != GRID_POINT_EMPTY) {
 					grid_free(testGridPtr);
+					printf("5\n");
+					//grid_setPoint(testGridPtr, x, y, z, id); // TODO: Delete this
 					return FALSE;
 				}
 				else {
@@ -357,6 +361,7 @@ bool_t maze_checkPaths(maze_t* mazePtr, list_t* pathVectorListPtr, bool_t doPrin
 			grid_getPointIndices(gridPtr, lastGridPointPtr, &x, &y, &z);
 			if (grid_getPoint(testGridPtr, x, y, z) != 0) {
 				grid_free(testGridPtr);
+				printf("6\n");
 				return FALSE;
 			}
 		} /* iteratate over pathVector */

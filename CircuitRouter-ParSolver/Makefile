@@ -5,8 +5,8 @@ SOURCES = router.c maze.c grid.c coordinate.c CircuitRouter-ParSolver.c
 SOURCES+= ../lib/vector.c ../lib/queue.c ../lib/list.c ../lib/pair.c ../lib/mutex.c
 OBJS = $(SOURCES:%.c=%.o)
 CC   = gcc
-CFLAGS =-Wall -std=gnu99 -I../
-LDFLAGS=-lm -pthread
+CFLAGS =-Wall -std=gnu99 -pthread -I../
+LDFLAGS=-lm
 TARGET = CircuitRouter-ParSolver
 
 all: $(TARGET)
@@ -23,7 +23,8 @@ coordinate.o: coordinate.c coordinate.h ../lib/pair.h ../lib/types.h
 ../lib/queue.o: ../lib/queue.c ../lib/queue.h ../lib/types.h
 ../lib/list.o: ../lib/list.c ../lib/list.h ../lib/types.h
 ../lib/pair.o: ../lib/pair.c ../lib/pair.h
-../lib/mutex.o: ../lib/mutex.c ../lib/mutex.h
+../lib/mutex.o: ../lib/mutex.c ../lib/mutex.h ../lib/vector.h
+
 
 $(OBJS):
 	$(CC) $(CFLAGS) -c -o $@ $<

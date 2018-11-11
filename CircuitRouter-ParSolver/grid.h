@@ -60,16 +60,16 @@
 
 
 typedef struct grid {
-    long width;
-    long height;
-    long depth;
-    long* points;
-    long* points_unaligned;
+	long width;
+	long height;
+	long depth;
+	long* points;
+	long* points_unaligned;
 } grid_t;
 
 enum {
-    GRID_POINT_FULL  = -2L,
-    GRID_POINT_EMPTY = -1L
+	GRID_POINT_FULL = -2L,
+	GRID_POINT_EMPTY = -1L
 };
 
 
@@ -77,91 +77,91 @@ enum {
  * grid_alloc
  * =============================================================================
  */
-grid_t* grid_alloc (long width, long height, long depth);
+grid_t* grid_alloc(long width, long height, long depth);
 
 
 /* =============================================================================
  * grid_free
  * =============================================================================
  */
-void grid_free (grid_t* gridPtr);
+void grid_free(grid_t* gridPtr);
 
 
 /* =============================================================================
  * grid_copy
  * =============================================================================
  */
-void grid_copy (grid_t* dstGridPtr, grid_t* srcGridPtr);
+void grid_copy(grid_t* dstGridPtr, grid_t* srcGridPtr);
 
 
 /* =============================================================================
  * grid_isPointValid
  * =============================================================================
  */
-bool_t grid_isPointValid (grid_t* gridPtr, long x, long y, long z);
+bool_t grid_isPointValid(grid_t* gridPtr, long x, long y, long z);
 
 
 /* =============================================================================
  * grid_getPointRef
  * =============================================================================
  */
-long* grid_getPointRef (grid_t* gridPtr, long x, long y, long z);
+long* grid_getPointRef(grid_t* gridPtr, long x, long y, long z);
 
 
 /* =============================================================================
  * grid_getPointIndices
  * =============================================================================
  */
-void grid_getPointIndices (grid_t* gridPtr, long* gridPointPtr, long* xPtr, long* yPtr, long* zPtr);
+void grid_getPointIndices(grid_t* gridPtr, long* gridPointPtr, long* xPtr, long* yPtr, long* zPtr);
 
 
 /* =============================================================================
  * grid_getPoint
  * =============================================================================
  */
-long grid_getPoint (grid_t* gridPtr, long x, long y, long z);
+long grid_getPoint(grid_t* gridPtr, long x, long y, long z);
 
 
 /* =============================================================================
  * grid_isPointEmpty
  * =============================================================================
  */
-bool_t grid_isPointEmpty (grid_t* gridPtr, long x, long y, long z);
+bool_t grid_isPointEmpty(grid_t* gridPtr, long x, long y, long z);
 
 
 /* =============================================================================
  * grid_isPointFull
  * =============================================================================
  */
-bool_t grid_isPointFull (grid_t* gridPtr, long x, long y, long z);
+bool_t grid_isPointFull(grid_t* gridPtr, long x, long y, long z);
 
 
 /* =============================================================================
  * grid_setPoint
  * =============================================================================
  */
-void grid_setPoint (grid_t* gridPtr, long x, long y, long z, long value);
+void grid_setPoint(grid_t* gridPtr, long x, long y, long z, long value);
 
 
 /* =============================================================================
  * grid_addPath
  * =============================================================================
  */
-void grid_addPath (grid_t* gridPtr, vector_t* pointVectorPtr);
+void grid_addPath(grid_t* gridPtr, vector_t* pointVectorPtr);
 
 
 /* =============================================================================
  * grid_addPath_Ptr
  * =============================================================================
  */
-void grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr);
+int grid_addPath_Ptr(grid_t* gridPtr, vector_t* pointVectorPtr);
 
 
 /* =============================================================================
  * grid_print
  * =============================================================================
  */
-void grid_print (grid_t* gridPtr);
+void grid_print(grid_t* gridPtr);
 
 
 #endif /* GRID_H */

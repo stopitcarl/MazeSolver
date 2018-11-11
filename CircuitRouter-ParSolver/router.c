@@ -242,14 +242,15 @@ static vector_t* doTraceback(grid_t* gridPtr, grid_t* myGridPtr, coordinate_t* d
 		vector_pushBack(pointVectorPtr, (void*)gridPointPtr);
 		grid_setPoint(myGridPtr, next.x, next.y, next.z, GRID_POINT_FULL);
 
+
 		/* Check if we are done */
 		if (next.value == 0) {
 			break;
 		}
 		point_t curr = next;
 
-		// TODO: Eliminate extra check
-		/* 
+		// TODO: Eliminate extra check (no need to check own path)
+		/*
 		 * Check 6 neighbors
 		 *
 		 * Potential Optimization: Only need to check 5 of these
@@ -320,16 +321,16 @@ void * router_solve(void* argPtr) {
 		queue_mutex_lock();
 		if (queue_isEmpty(workQueuePtr)) {
 			coordinatePairPtr = NULL;
-			queue_mutex_unlock(); // TODO: check if return existed here
-			return NULL;
+			queue_mutex_unlock();
 		}
 		else {
 			coordinatePairPtr = (pair_t*)queue_pop(workQueuePtr);
+			queue_mutex_unlock();
 		}
 		if (coordinatePairPtr == NULL) {
 			break;
 		}
-		queue_mutex_unlock();
+
 
 		coordinate_t* srcPtr = coordinatePairPtr->firstPtr;
 		coordinate_t* dstPtr = coordinatePairPtr->secondPtr;
@@ -338,14 +339,17 @@ void * router_solve(void* argPtr) {
 
 		bool_t success = FALSE;
 		vector_t* pointVectorPtr = NULL;
-
+	GridCopy: // Jump back to here if locks fail		
 		grid_copy(myGridPtr, gridPtr); /* create a copy of the grid, over which the expansion and trace back phases will be executed. */
 		if (doExpansion(routerPtr, myGridPtr, myExpansionQueuePtr,
 			srcPtr, dstPtr)) {
 			pointVectorPtr = doTraceback(gridPtr, myGridPtr, dstPtr, bendCost);
 			if (pointVectorPtr) {
-				grid_mutex_lock(pointVectorPtr);
-				grid_addPath_Ptr(gridPtr, pointVectorPtr);
+				if (grid_mutex_lock(pointVectorPtr)) { printf("Failed the lock\n"); goto GridCopy; }
+				if (grid_addPath_Ptr(gridPtr, pointVectorPtr)) {
+					grid_mutex_unlock(pointVectorPtr);
+					goto GridCopy;
+				}
 				grid_mutex_unlock(pointVectorPtr);
 				success = TRUE;
 			}
@@ -355,16 +359,15 @@ void * router_solve(void* argPtr) {
 			bool_t status = vector_pushBack(myPathVectorPtr, (void*)pointVectorPtr);
 			assert(status);
 		}
-
 	}
 
 	/*
 	 * Add my paths to global list
 	 */
-	// TODO: lock pathVectorListPtr
+	path_mutex_lock();
 	list_t* pathVectorListPtr = routerArgPtr->pathVectorListPtr;
 	list_insert(pathVectorListPtr, (void*)myPathVectorPtr);
-	// TODO: unlock
+	path_mutex_unlock();
 	grid_free(myGridPtr);
 	queue_free(myExpansionQueuePtr);
 

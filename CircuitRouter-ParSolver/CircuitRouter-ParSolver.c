@@ -134,7 +134,6 @@ static FILE *parseArgs(long argc, char *const argv[])
 	assert(fileToRead);
 	createOutputFile(argv[optind]);
 
-	printf("args parsed\n");
 	return fileToRead;
 }
 
@@ -146,7 +145,7 @@ int main(int argc, char **argv)
 {
 
 	// Redirect error messages
-	freopen("stderr.log", "a", stderr); // dont erase previous stderr info (for better debugging)
+	//freopen("stderr.log", "a", stderr); // dont erase previous stderr info (for better debugging)
 
 	// Open file
 	FILE *file = parseArgs(argc, (char **const)argv);
@@ -168,17 +167,18 @@ int main(int argc, char **argv)
 	TIMER_T startTime;
 	TIMER_READ(startTime);
 
+	// Initialize mutexes
 	queue_mutex_init();
-	grid_mutex_init(vector_getSize(mazePtr->gridPtr->points), mazePtr->gridPtr->points);
-	pthread_t thread_id[MAX_THREADS]; // thread list	
+	path_mutex_init();
+	grid_mutex_init(mazePtr->gridPtr);
+	pthread_t thread_id[MAX_THREADS];
+
 	int i = 0;
 	for (; i < MAX_THREADS; i++)
 		pthread_create(&thread_id[i], NULL, router_solve, (void *)&routerArg);
 
 	for (i = 0; i < MAX_THREADS; i++)
 		pthread_join(thread_id[i], NULL);
-
-	//router_solve((void *)&routerArg);
 
 	TIMER_T stopTime;
 	TIMER_READ(stopTime);
