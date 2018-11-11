@@ -28,6 +28,7 @@ void grid_mutex_init(grid_t* grid);
 int grid_mutex_lock(vector_t* points);
 void grid_mutex_unlock(vector_t* points);
 void grid_mutex_unlock_partial(vector_t *points, size_t max);
+void grid_mutex_free();
 
 
 /* =============================================================================

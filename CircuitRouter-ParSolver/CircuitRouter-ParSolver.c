@@ -183,6 +183,7 @@ int main(int argc, char **argv)
 	TIMER_T stopTime;
 	TIMER_READ(stopTime);
 
+
 	long numPathRouted = 0;
 	list_iter_t it;
 	list_iter_reset(&it, pathVectorListPtr);
@@ -202,6 +203,7 @@ int main(int argc, char **argv)
 
 	maze_free(mazePtr);
 	router_free(routerPtr);
+	grid_mutex_free();
 
 	list_iter_reset(&it, pathVectorListPtr);
 	while (list_iter_hasNext(&it, pathVectorListPtr))

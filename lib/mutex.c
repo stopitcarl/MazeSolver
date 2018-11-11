@@ -83,5 +83,7 @@ void grid_mutex_unlock_partial(vector_t *points, size_t max)
 		assert(pthread_mutex_unlock(&grid_mutex[(long*)vector_at(points, i) - pointsOfGrid]) == 0);
 }
 
-
+void grid_mutex_free() {
+	free(grid_mutex);
+}
 
