@@ -121,7 +121,7 @@ void router_free(router_t* routerPtr) {
  */
 static void expandToNeighbor(grid_t* myGridPtr, long x, long y, long z, long value, queue_t* queuePtr) {
 	if (grid_isPointValid(myGridPtr, x, y, z)) {
-		long* neighborGridPointPtr = grid_getPointRef(myGridPtr, x, y, z);
+		long* neighborGridPointPtr = getPointRef(myGridPtr, x, y, z);
 		long neighborValue = *neighborGridPointPtr;
 		if (neighborValue == GRID_POINT_EMPTY) {
 			(*neighborGridPointPtr) = value;
@@ -153,11 +153,11 @@ static bool_t doExpansion(router_t* routerPtr, grid_t* myGridPtr, queue_t* queue
 	 */
 
 	queue_clear(queuePtr);
-	long* srcGridPointPtr = grid_getPointRef(myGridPtr, srcPtr->x, srcPtr->y, srcPtr->z);
+	long* srcGridPointPtr = getPointRef(myGridPtr, srcPtr->x, srcPtr->y, srcPtr->z);
 	queue_push(queuePtr, (void*)srcGridPointPtr);
 	grid_setPoint(myGridPtr, srcPtr->x, srcPtr->y, srcPtr->z, 0);
 	grid_setPoint(myGridPtr, dstPtr->x, dstPtr->y, dstPtr->z, GRID_POINT_EMPTY);
-	long* dstGridPointPtr = grid_getPointRef(myGridPtr, dstPtr->x, dstPtr->y, dstPtr->z);
+	long* dstGridPointPtr = getPointRef(myGridPtr, dstPtr->x, dstPtr->y, dstPtr->z);
 	bool_t isPathFound = FALSE;
 
 	while (!queue_isEmpty(queuePtr)) {
@@ -205,7 +205,7 @@ static void traceToNeighbor(grid_t* myGridPtr, point_t* currPtr, point_t* movePt
 		!grid_isPointEmpty(myGridPtr, x, y, z) &&
 		!grid_isPointFull(myGridPtr, x, y, z))
 	{
-		long value = grid_getPoint(myGridPtr, x, y, z);
+		long value = getPoint(myGridPtr, x, y, z);
 		long b = 0;
 		if (useMomentum && (currPtr->momentum != movePtr->momentum)) {
 			b = bendCost;
@@ -229,16 +229,17 @@ static vector_t* doTraceback(grid_t* gridPtr, grid_t* myGridPtr, coordinate_t* d
 	vector_t* pointVectorPtr = vector_alloc(1);
 	assert(pointVectorPtr);
 
+
 	point_t next;
 	next.x = dstPtr->x;
 	next.y = dstPtr->y;
 	next.z = dstPtr->z;
-	next.value = grid_getPoint(myGridPtr, next.x, next.y, next.z);
+	next.value = getPoint(myGridPtr, next.x, next.y, next.z);
 	next.momentum = MOMENTUM_ZERO;
 
 	while (1) {
 
-		long* gridPointPtr = grid_getPointRef(gridPtr, next.x, next.y, next.z);
+		long* gridPointPtr = getPointRef(gridPtr, next.x, next.y, next.z);
 		vector_pushBack(pointVectorPtr, (void*)gridPointPtr);
 		grid_setPoint(myGridPtr, next.x, next.y, next.z, GRID_POINT_FULL);
 
@@ -249,18 +250,13 @@ static vector_t* doTraceback(grid_t* gridPtr, grid_t* myGridPtr, coordinate_t* d
 		}
 		point_t curr = next;
 
-		// TODO: Eliminate extra check (no need to check own path)
-		/*
-		 * Check 6 neighbors
-		 *
-		 * Potential Optimization: Only need to check 5 of these
-		 */
-		traceToNeighbor(myGridPtr, &curr, &MOVE_POSX, TRUE, bendCost, &next);
-		traceToNeighbor(myGridPtr, &curr, &MOVE_POSY, TRUE, bendCost, &next);
-		traceToNeighbor(myGridPtr, &curr, &MOVE_POSZ, TRUE, bendCost, &next);
-		traceToNeighbor(myGridPtr, &curr, &MOVE_NEGX, TRUE, bendCost, &next);
-		traceToNeighbor(myGridPtr, &curr, &MOVE_NEGY, TRUE, bendCost, &next);
-		traceToNeighbor(myGridPtr, &curr, &MOVE_NEGZ, TRUE, bendCost, &next);
+
+		if (next.momentum != MOMENTUM_NEGX)traceToNeighbor(myGridPtr, &curr, &MOVE_POSX, TRUE, bendCost, &next);
+		if (next.momentum != MOMENTUM_NEGY)traceToNeighbor(myGridPtr, &curr, &MOVE_POSY, TRUE, bendCost, &next);
+		if (next.momentum != MOMENTUM_NEGZ)traceToNeighbor(myGridPtr, &curr, &MOVE_POSZ, TRUE, bendCost, &next);
+		if (next.momentum != MOMENTUM_POSX)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGX, TRUE, bendCost, &next);
+		if (next.momentum != MOMENTUM_POSX)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGY, TRUE, bendCost, &next);
+		if (next.momentum != MOMENTUM_POSX)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGZ, TRUE, bendCost, &next);
 
 		/*
 		 * Because of bend costs, none of the neighbors may appear to be closer.
@@ -271,12 +267,12 @@ static vector_t* doTraceback(grid_t* gridPtr, grid_t* myGridPtr, coordinate_t* d
 			(curr.z == next.z))
 		{
 			next.value = curr.value;
-			traceToNeighbor(myGridPtr, &curr, &MOVE_POSX, FALSE, bendCost, &next);
-			traceToNeighbor(myGridPtr, &curr, &MOVE_POSY, FALSE, bendCost, &next);
-			traceToNeighbor(myGridPtr, &curr, &MOVE_POSZ, FALSE, bendCost, &next);
-			traceToNeighbor(myGridPtr, &curr, &MOVE_NEGX, FALSE, bendCost, &next);
-			traceToNeighbor(myGridPtr, &curr, &MOVE_NEGY, FALSE, bendCost, &next);
-			traceToNeighbor(myGridPtr, &curr, &MOVE_NEGZ, FALSE, bendCost, &next);
+			if (next.momentum != MOMENTUM_NEGX)traceToNeighbor(myGridPtr, &curr, &MOVE_POSX, FALSE, bendCost, &next);
+			if (next.momentum != MOMENTUM_NEGY)traceToNeighbor(myGridPtr, &curr, &MOVE_POSY, FALSE, bendCost, &next);
+			if (next.momentum != MOMENTUM_NEGZ)traceToNeighbor(myGridPtr, &curr, &MOVE_POSZ, FALSE, bendCost, &next);
+			if (next.momentum != MOMENTUM_POSX)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGX, FALSE, bendCost, &next);
+			if (next.momentum != MOMENTUM_POSX)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGY, FALSE, bendCost, &next);
+			if (next.momentum != MOMENTUM_POSX)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGZ, FALSE, bendCost, &next);
 
 			if ((curr.x == next.x) &&
 				(curr.y == next.y) &&
@@ -344,7 +340,7 @@ void * router_solve(void* argPtr) {
 		if (doExpansion(routerPtr, myGridPtr, myExpansionQueuePtr,
 			srcPtr, dstPtr)) {
 			pointVectorPtr = doTraceback(gridPtr, myGridPtr, dstPtr, bendCost);
-			if (pointVectorPtr) {
+			if (pointVectorPtr) {				
 				if (grid_mutex_lock(pointVectorPtr)) { printf("Failed the lock\n"); goto GridCopy; }
 				if (grid_addPath_Ptr(gridPtr, pointVectorPtr)) {
 					grid_mutex_unlock(pointVectorPtr);

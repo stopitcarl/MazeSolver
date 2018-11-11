@@ -128,15 +128,15 @@ bool_t grid_isPointValid(grid_t* gridPtr, long x, long y, long z) {
 	return TRUE;
 }
 
-
+// TODO: Delete this code? (it's now a macro - getPointRef)
 /* =============================================================================
  * grid_getPointRef
  * =============================================================================
- */
+
 long* grid_getPointRef(grid_t* gridPtr, long x, long y, long z) {
-	// TODO: make this a macro to lessen the stack load	
 	return &(gridPtr->points[(z * gridPtr->height + y) * gridPtr->width + x]);
 }
+*/
 
 
 /* =============================================================================
@@ -160,8 +160,9 @@ void grid_getPointIndices(grid_t* gridPtr, long* gridPointPtr, long* xPtr, long*
  * =============================================================================
  */
 long grid_getPoint(grid_t* gridPtr, long x, long y, long z) {
-	return *grid_getPointRef(gridPtr, x, y, z);
+	return *getPointRef(gridPtr, x, y, z);
 }
+
 
 
 /* =============================================================================
@@ -169,7 +170,7 @@ long grid_getPoint(grid_t* gridPtr, long x, long y, long z) {
  * =============================================================================
  */
 bool_t grid_isPointEmpty(grid_t* gridPtr, long x, long y, long z) {
-	long value = grid_getPoint(gridPtr, x, y, z);
+	long value = getPoint(gridPtr, x, y, z);
 	return ((value == GRID_POINT_EMPTY) ? TRUE : FALSE);
 }
 
@@ -179,7 +180,7 @@ bool_t grid_isPointEmpty(grid_t* gridPtr, long x, long y, long z) {
  * =============================================================================
  */
 bool_t grid_isPointFull(grid_t* gridPtr, long x, long y, long z) {
-	long value = grid_getPoint(gridPtr, x, y, z);
+	long value = getPoint(gridPtr, x, y, z);
 	return ((value == GRID_POINT_FULL) ? TRUE : FALSE);
 }
 
@@ -190,7 +191,7 @@ bool_t grid_isPointFull(grid_t* gridPtr, long x, long y, long z) {
  */
 void grid_setPoint(grid_t* gridPtr, long x, long y, long z, long value) {
 	//printf("Setting point %p to %ld\n", grid_getPointRef(gridPtr, x, y, z), value);
-	(*grid_getPointRef(gridPtr, x, y, z)) = value;
+	(*getPointRef(gridPtr, x, y, z)) = value;
 }
 
 
@@ -248,7 +249,7 @@ void grid_print(grid_t* gridPtr) {
 		for (x = 0; x < width; x++) {
 			long y;
 			for (y = 0; y < height; y++) {
-				printf("%4li", *grid_getPointRef(gridPtr, x, y, z));
+				printf("%4li", *getPointRef(gridPtr, x, y, z));
 			}
 			puts("");
 		}

@@ -8,8 +8,6 @@ static long* pointsOfGrid;
 static size_t sizeOfPoints;
 
 
-// TODO: Assert that all  mutex operations return 0 (sucessfull)
-
 void queue_mutex_init()
 {
 	assert(pthread_mutex_init(&queue_mutex, NULL) == 0);

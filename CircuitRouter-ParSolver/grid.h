@@ -54,6 +54,8 @@
 #ifndef GRID_H
 #define GRID_H 1
 
+#define getPointRef(gridPtr, x, y, z) (&(gridPtr->points[(z * gridPtr->height + y) * gridPtr->width + x]))
+#define getPoint(gridPtr, x, y, z) (*getPointRef(gridPtr, x, y, z))
 
 #include "lib/types.h"
 #include "lib/vector.h"
@@ -104,9 +106,9 @@ bool_t grid_isPointValid(grid_t* gridPtr, long x, long y, long z);
 /* =============================================================================
  * grid_getPointRef
  * =============================================================================
- */
-long* grid_getPointRef(grid_t* gridPtr, long x, long y, long z);
 
+long* grid_getPointRef(grid_t* gridPtr, long x, long y, long z);
+*/
 
 /* =============================================================================
  * grid_getPointIndices
