@@ -29,5 +29,5 @@ OS:
 	Linux sigma02.ist.utl.pt 4.9.0-8-amd64 #1 SMP Debian 4.9.110-3+deb9u4 (2018-08-21) x86_64 GNU/Linux
 Specs:
 	Intel(R) Xeon(R) CPU E5-2620 0 @ 2.00GHz
-	8 Core ( virtually assigned from a cluster of 6 Core - 16 Thread CPUs)
+	8 Threads ( virtually assigned from a cluster of 6 Core - 12 Thread CPUs)
 

@@ -341,9 +341,9 @@ void * router_solve(void* argPtr) {
 			srcPtr, dstPtr)) {
 			pointVectorPtr = doTraceback(gridPtr, myGridPtr, dstPtr, bendCost);
 			if (pointVectorPtr) {
-				if (grid_mutex_lock(pointVectorPtr)) { printf("Failed the lock\n"); goto GridCopy; }
+				if (grid_mutex_lock(pointVectorPtr)) { goto GridCopy; }
 				if (grid_addPath_Ptr(gridPtr, pointVectorPtr)) {
-					grid_mutex_unlock(pointVectorPtr);					
+					grid_mutex_unlock(pointVectorPtr);
 					vector_free(pointVectorPtr);
 					goto GridCopy;
 				}

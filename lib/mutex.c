@@ -43,6 +43,7 @@ void grid_mutex_init(grid_t* grid)
 
 	// Create and initialize array of mutexes
 	grid_mutex = malloc(sizeof(pthread_mutex_t) * sizeOfPoints);
+	assert(grid_mutex);
 	for (i = 0; i < sizeOfPoints; i++)
 		assert(pthread_mutex_init(&grid_mutex[i], NULL) == 0);
 }

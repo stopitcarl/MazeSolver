@@ -189,8 +189,7 @@ bool_t grid_isPointFull(grid_t* gridPtr, long x, long y, long z) {
  * grid_setPoint
  * =============================================================================
  */
-void grid_setPoint(grid_t* gridPtr, long x, long y, long z, long value) {
-	//printf("Setting point %p to %ld\n", grid_getPointRef(gridPtr, x, y, z), value);
+void grid_setPoint(grid_t* gridPtr, long x, long y, long z, long value) {	
 	(*getPointRef(gridPtr, x, y, z)) = value;
 }
 
