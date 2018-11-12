@@ -124,11 +124,10 @@ static FILE *parseArgs(long argc, char *const argv[])
 	}
 
 	if (opterr)
-	{
 		displayUsage(argv[0]);
-	}
 
-	assert(MAX_THREADS != 0);
+	assert(MAX_THREADS > 0); // Thread number must be bigger than 0
+
 	// If opt doesnt match options, assume it's the file name
 	fileToRead = fopen(argv[optind], "r");
 	assert(fileToRead);
@@ -173,17 +172,18 @@ int main(int argc, char **argv)
 	grid_mutex_init(mazePtr->gridPtr);
 	pthread_t thread_id[MAX_THREADS];
 
+	// Create threads
 	int i = 0;
 	for (; i < MAX_THREADS; i++)
 		pthread_create(&thread_id[i], NULL, router_solve, (void *)&routerArg);
-
+	// Catch threads
 	for (i = 0; i < MAX_THREADS; i++)
 		pthread_join(thread_id[i], NULL);
 
 	TIMER_T stopTime;
 	TIMER_READ(stopTime);
 
-
+	// Check number of paths solved
 	long numPathRouted = 0;
 	list_iter_t it;
 	list_iter_reset(&it, pathVectorListPtr);

@@ -175,7 +175,7 @@ static bool_t doExpansion(router_t* routerPtr, grid_t* myGridPtr, queue_t* queue
 		long value = (*gridPointPtr);
 
 		/*
-		 * Check 6 neighbors
+		 * Check 5 of the neighbors
 		 *
 		 * Potential Optimization: Only need to check 5 of these
 		 */
@@ -250,7 +250,7 @@ static vector_t* doTraceback(grid_t* gridPtr, grid_t* myGridPtr, coordinate_t* d
 		}
 		point_t curr = next;
 
-
+		// Check of 5 of the neighbours ( don't check the cell that is already on the path )
 		if (next.momentum != MOMENTUM_NEGX)traceToNeighbor(myGridPtr, &curr, &MOVE_POSX, TRUE, bendCost, &next);
 		if (next.momentum != MOMENTUM_NEGY)traceToNeighbor(myGridPtr, &curr, &MOVE_POSY, TRUE, bendCost, &next);
 		if (next.momentum != MOMENTUM_NEGZ)traceToNeighbor(myGridPtr, &curr, &MOVE_POSZ, TRUE, bendCost, &next);
@@ -312,7 +312,7 @@ void * router_solve(void* argPtr) {
 	 * 'expansion' and 'traceback' phase for each source/destination pair.
 	 */
 	while (1) {
-
+		 // Pop Src-Dst pair from queue
 		pair_t* coordinatePairPtr;
 		queue_mutex_lock();
 		if (queue_isEmpty(workQueuePtr)) {
@@ -340,12 +340,12 @@ void * router_solve(void* argPtr) {
 		if (doExpansion(routerPtr, myGridPtr, myExpansionQueuePtr,
 			srcPtr, dstPtr)) {
 			pointVectorPtr = doTraceback(gridPtr, myGridPtr, dstPtr, bendCost);
-			if (pointVectorPtr) {
-				if (grid_mutex_lock(pointVectorPtr)) { goto GridCopy; }
-				if (grid_addPath_Ptr(gridPtr, pointVectorPtr)) {
-					grid_mutex_unlock(pointVectorPtr);
-					vector_free(pointVectorPtr);
-					goto GridCopy;
+			if (pointVectorPtr) { // If a path is found
+				if (grid_mutex_lock(pointVectorPtr)) { goto GridCopy; } // lock every cell in that path
+				if (grid_addPath_Ptr(gridPtr, pointVectorPtr)) { // If path is compromised (by another thread)
+					grid_mutex_unlock(pointVectorPtr);	// Unlock cells, 
+					vector_free(pointVectorPtr);	// ... free memory
+					goto GridCopy; // .. and try again
 				}
 				grid_mutex_unlock(pointVectorPtr);
 				success = TRUE;
