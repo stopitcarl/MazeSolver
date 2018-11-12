@@ -255,8 +255,8 @@ static vector_t* doTraceback(grid_t* gridPtr, grid_t* myGridPtr, coordinate_t* d
 		if (next.momentum != MOMENTUM_NEGY)traceToNeighbor(myGridPtr, &curr, &MOVE_POSY, TRUE, bendCost, &next);
 		if (next.momentum != MOMENTUM_NEGZ)traceToNeighbor(myGridPtr, &curr, &MOVE_POSZ, TRUE, bendCost, &next);
 		if (next.momentum != MOMENTUM_POSX)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGX, TRUE, bendCost, &next);
-		if (next.momentum != MOMENTUM_POSX)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGY, TRUE, bendCost, &next);
-		if (next.momentum != MOMENTUM_POSX)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGZ, TRUE, bendCost, &next);
+		if (next.momentum != MOMENTUM_POSY)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGY, TRUE, bendCost, &next);
+		if (next.momentum != MOMENTUM_POSZ)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGZ, TRUE, bendCost, &next);
 
 		/*
 		 * Because of bend costs, none of the neighbors may appear to be closer.
@@ -271,8 +271,8 @@ static vector_t* doTraceback(grid_t* gridPtr, grid_t* myGridPtr, coordinate_t* d
 			if (next.momentum != MOMENTUM_NEGY)traceToNeighbor(myGridPtr, &curr, &MOVE_POSY, FALSE, bendCost, &next);
 			if (next.momentum != MOMENTUM_NEGZ)traceToNeighbor(myGridPtr, &curr, &MOVE_POSZ, FALSE, bendCost, &next);
 			if (next.momentum != MOMENTUM_POSX)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGX, FALSE, bendCost, &next);
-			if (next.momentum != MOMENTUM_POSX)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGY, FALSE, bendCost, &next);
-			if (next.momentum != MOMENTUM_POSX)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGZ, FALSE, bendCost, &next);
+			if (next.momentum != MOMENTUM_POSY)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGY, FALSE, bendCost, &next);
+			if (next.momentum != MOMENTUM_POSZ)traceToNeighbor(myGridPtr, &curr, &MOVE_NEGZ, FALSE, bendCost, &next);
 
 			if ((curr.x == next.x) &&
 				(curr.y == next.y) &&
@@ -312,7 +312,7 @@ void * router_solve(void* argPtr) {
 	 * 'expansion' and 'traceback' phase for each source/destination pair.
 	 */
 	while (1) {
-		 // Pop Src-Dst pair from queue
+		// Pop Src-Dst pair from queue
 		pair_t* coordinatePairPtr;
 		queue_mutex_lock();
 		if (queue_isEmpty(workQueuePtr)) {
