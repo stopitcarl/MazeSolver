@@ -1,8 +1,0 @@
-globais:
-	queue
-	copia da grid (nao, mas explica pq: leitura = atomica)
-	addGridPath
-
-Traceback:
-	semaforo
-

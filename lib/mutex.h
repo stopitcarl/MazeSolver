@@ -5,9 +5,6 @@
 #define SLEEPTIME (const struct timespec[]) { {0, 150L} }, NULL
 
 
-
-#endif /* MUTEX_H */
-
 #include <pthread.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -30,10 +27,5 @@ void grid_mutex_unlock(vector_t* points);
 void grid_mutex_unlock_partial(vector_t *points, size_t max);
 void grid_mutex_free();
 
+#endif /* MUTEX_H */
 
-/* =============================================================================
- *
- * End of pair.h
- *
- * =============================================================================
- */
