@@ -144,7 +144,7 @@ int main(int argc, char **argv)
 {
 
 	// Redirect error messages
-	//freopen("stderr.log", "a", stderr); // dont erase previous stderr info (for better debugging)
+	freopen("stderr.log", "a", stderr); // dont erase previous stderr info (for better debugging)
 
 	// Open file
 	FILE *file = parseArgs(argc, (char **const)argv);
