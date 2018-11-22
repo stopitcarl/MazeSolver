@@ -1,30 +1,17 @@
 ﻿i)
 
-
 │ README.txt (this file)
-
 │ ./compileAll
-
 │
-
 ├───CircuitRouter-ParSolver 
-
 │
-
 ├───CircuitRouter-SeqSolver 
-
 │
-
 ├───inputs       
-
 │
-
 ├───lib
-
 │
-
 └───results
-
 
 
 ii)
