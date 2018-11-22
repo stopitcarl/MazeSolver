@@ -7,3 +7,5 @@
 /CircuitRouter-SimpleShell/*.in
 *.log
 CircuitRouter-ParSolver
+*.cvs
+results
