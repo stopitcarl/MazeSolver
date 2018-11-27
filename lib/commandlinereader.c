@@ -25,35 +25,35 @@ Return value:
 */
 int readLineArguments(char **argVector, int vectorSize, char *buffer, int bufferSize)
 {
-  int numTokens = 0;
-  char *s = " \r\n\t";
+	int numTokens = 0;
+	char *s = " \r\n\t";
 
-  int i;
+	int i;
 
-  char *token;
+	char *token;
 
-  if (argVector == NULL || buffer == NULL || vectorSize <= 0 || bufferSize <= 0)
-     return 0;
+	if (argVector == NULL || buffer == NULL || vectorSize <= 0 || bufferSize <= 0)
+		return 0;
 
-  if (fgets(buffer, bufferSize, stdin) == NULL) {
-    return -1;
-  }
+	if (fgets(buffer, bufferSize, stdin) == NULL) {
+		return -1;
+	}
 
-  /* get the first token */
-  token = strtok(buffer, s);
+	/* get the first token */
+	token = strtok(buffer, s);
 
-  /* walk through other tokens */
-  while( numTokens < vectorSize-1 && token != NULL ) {
-    argVector[numTokens] = token;
-    numTokens ++;
+	/* walk through other tokens */
+	while (numTokens < vectorSize - 1 && token != NULL) {
+		argVector[numTokens] = token;
+		numTokens++;
 
-    token = strtok(NULL, s);
-  }
+		token = strtok(NULL, s);
+	}
 
-  for (i = numTokens; i<vectorSize; i++) {
-    argVector[i] = NULL;
-  }
+	for (i = numTokens; i < vectorSize; i++) {
+		argVector[i] = NULL;
+	}
 
-  return numTokens;
+	return numTokens;
 }
 
