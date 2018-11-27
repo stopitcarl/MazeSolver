@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include "lib/commandlinereader.h"
 #include "lib/vector.h"
+#include "lib/timer.h"
 
 
 
@@ -40,6 +41,15 @@ void storetask(int pid, int status) {
 	struct taskState *task = malloc(sizeof(struct taskState));
 	task->state = status;
 	task->pid = pid;
+	TIMER_T startTime;
+	TIMER_READ(startTime);
+
+	// router_solve((void *)&routerArg);
+
+	TIMER_T stopTime;
+	TIMER_READ(stopTime);
+	TIMER_DIFF_SECONDS(startTime, stopTime);
+
 	assert(vector_pushBack(taskHistory, task) == TRUE);
 }
 
