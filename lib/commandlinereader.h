@@ -25,5 +25,6 @@ Return value:
 */
 
 int readLineArguments(char **argVector, int vectorSize, char *buffer, int bufferSize);
+int readLineArgumentsFd(int fd, char **argVector, int vectorSize, char *buffer, int bufferSize);
 
 #endif
