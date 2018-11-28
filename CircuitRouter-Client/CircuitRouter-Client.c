@@ -66,6 +66,7 @@ int main() {
 	int fd;
 	char cmdBuffer[MAXINPUT];
 	char *argsRead[NUMOFWORDS];
+	char * pipe_out = "tmp/circuitrouter-advshell.pipe";
 
 	char * fifo = makePipeName(getpid());
 	connect(fifo, &fd);
@@ -74,7 +75,7 @@ int main() {
 	do {
 		// Read args from input
 		printf(">>> ");
-		numArgs = readLineArguments(argsRead, NUMOFWORDS, cmdBuffer, MAXINPUT);
+		numArgs = readLineArgumentsFd(0, argsRead, NUMOFWORDS, cmdBuffer, MAXINPUT);
 		if (numArgs == -1) {
 			printf("Couldn't read input.\n");
 			continue;
@@ -88,7 +89,7 @@ int main() {
 		if (strcmp(argsRead[0], "exit") == 0) { break; }
 		// Run
 		else if (strcmp(argsRead[0], "run") == 0) {
-			write(fd, "Asking server to run\n", 19);
+			write(fd, "Asking server to run\n", 21);
 		}
 		else { printf("Unknown command.\n"); }
 	} while (1);
