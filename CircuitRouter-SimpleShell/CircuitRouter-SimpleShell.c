@@ -33,10 +33,10 @@ int running_tasks;
 
 
 /* =============================================================================
- * storetask : Stores task info for later consumption
+ * storeChild : Stores task info for later consumption
  * =============================================================================
  */
-void storetask(int pid, int status) {
+void storeChild(int pid, int status) {
 	struct taskState *task = malloc(sizeof(struct taskState));
 	task->state = status;
 	task->pid = pid;
@@ -51,7 +51,7 @@ void waitForChild() {
 	int child_pid = 0, status = 0;
 	while ((child_pid = waitpid(-1, &status, WNOHANG)) > -1) { // while there's tasks running
 		if (child_pid > 0) {
-			storetask(child_pid, status);
+			storeChild(child_pid, status);
 			--running_tasks;
 			return;
 		}
@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
 		// Catch a task
 		if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0) {
 			// printf("task caught %d:%d\n", child_pid, status);
-			storetask(child_pid, status);
+			storeChild(child_pid, status);
 			--running_tasks;
 		}
 
@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
 	while (running_tasks > 0) {
 		if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0)
 		{
-			storetask(child_pid, status);
+			storeChild(child_pid, status);
 			--running_tasks;
 		}
 	}

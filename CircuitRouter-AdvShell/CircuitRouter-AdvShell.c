@@ -1,7 +1,7 @@
 /*
  * =============================================================================
  *
- * CircuitRouter-SimpleShell.c
+ * CircuitRouter-AdvShell.c
  *
  * =============================================================================
  */
@@ -11,46 +11,61 @@
 #define NUMOFWORDS 16
 
 #include <assert.h>
+#include <inttypes.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include "lib/commandlinereader.h"
-#include "lib/vector.h"
 #include "lib/timer.h"
+#include "lib/types.h"
+#include "lib/vector.h"
 
 
 
 struct taskState {
 	int state;
 	pid_t pid;
+	TIMER_T startTime, stopTime;
 };
 
 vector_t *taskHistory;
 int running_tasks;
+
+/* =============================================================================
+ * create : Stores task info for later consumption
+ * =============================================================================
+ */
+void addChild(vector_t * tasks, pid_t pid) {
+	struct taskState *task = malloc(sizeof(struct taskState));
+	TIMER_READ(task->startTime);
+	task->pid = pid;
+	assert(vector_pushBack(taskHistory, task) == TRUE);
+	++running_tasks;
+}
 
 
 /* =============================================================================
  * storetask : Stores task info for later consumption
  * =============================================================================
  */
-void storetask(int pid, int status) {
-	struct taskState *task = malloc(sizeof(struct taskState));
+void storeChild(pid_t pid, int status) {
+	struct taskState *task = NULL;
+	long i = vector_getSize(taskHistory) - 1;
+
+	for (; i >= 0; i--) {
+		task = vector_at(taskHistory, i);
+		if (task->pid == pid)
+			break;
+	}
+	assert(task); // Check that a task was found with given pid	
+
 	task->state = status;
-	task->pid = pid;
-	TIMER_T startTime;
-	TIMER_READ(startTime);
-
-	// router_solve((void *)&routerArg);
-
-	TIMER_T stopTime;
-	TIMER_READ(stopTime);
-	TIMER_DIFF_SECONDS(startTime, stopTime);
-
-	assert(vector_pushBack(taskHistory, task) == TRUE);
+	TIMER_READ(task->stopTime);
+	--running_tasks;
 }
 
 /* =============================================================================
@@ -61,16 +76,30 @@ void waitForChild() {
 	int child_pid = 0, status = 0;
 	while ((child_pid = waitpid(-1, &status, WNOHANG)) > -1) { // while there's tasks running
 		if (child_pid > 0) {
-			storetask(child_pid, status);
-			--running_tasks;
+			storeChild(child_pid, status);
 			return;
 		}
 	}
 }
 
+/* =============================================================================
+ * childReaper: Handles SIGCHLD
+ * =============================================================================
+ */
+void childReaper(int sig)
+{
+	pid_t pid;
+	int status;
+
+	while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
+		storeChild(pid, status);
+
+}
+
+
 
 /* =============================================================================
- * waitForChild: Blocks untill child is released
+ * printTaskInfo: Blocks untill child is released
  * =============================================================================
  */
 void printTaskInfo(struct taskState * task) {
@@ -78,9 +107,10 @@ void printTaskInfo(struct taskState * task) {
 
 	// Print OK if process exited normally, NOK otherwise
 	if (WIFEXITED(task->state) && WEXITSTATUS(task->state) == 0)
-		printf("OK)\n");
+		printf("OK;");
 	else
-		printf("NOK)\n");
+		printf("NOK;");
+	printf(" %.0f s)\n", TIMER_DIFF_SECONDS(task->startTime, task->stopTime)); // TODO: check if output has decimals correct
 }
 
 /* =============================================================================
@@ -89,8 +119,6 @@ void printTaskInfo(struct taskState * task) {
  */
 int main(int argc, char **argv) {
 	pid_t pid = 0;
-	int child_pid = 0;
-	int status = 0;
 	int running = TRUE;
 	int available_tasks = 0;
 	running_tasks = 0;
@@ -107,8 +135,16 @@ int main(int argc, char **argv) {
 		// printf("MAXCHILDREN are %d\n", available_tasks);
 	}
 	else {
-		available_tasks = -1; // no args provided -> infinite tasks 
+		available_tasks = -1; // no args provided = infinite tasks
 	}
+
+	// Set childReaper as a handler for SIGCHLD
+	struct sigaction sa;
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = childReaper;
+	sa.sa_flags = SA_RESTART;
+	assert(sigaction(SIGCHLD, &sa, NULL) == 0);
+
 
 	// Create task history storage	
 	taskHistory = vector_alloc(available_tasks > 0 ? available_tasks * 2 : 8);
@@ -127,13 +163,6 @@ int main(int argc, char **argv) {
 			continue;
 		}
 
-		// Catch a task
-		if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0) {
-			// printf("task caught %d:%d\n", child_pid, status);
-			storetask(child_pid, status);
-			--running_tasks;
-		}
-
 		// Exit
 		if (strcmp(argsRead[0], "exit") == 0) {
 			running = FALSE; // redudant code?  (may use later)
@@ -150,34 +179,27 @@ int main(int argc, char **argv) {
 			pid = fork();
 			if (pid < 0) {
 				printf("Unable to fork\n");
-				--running_tasks;
 				continue;
 			}
 			else if (pid == 0) { // child task
 				if (!(numArgs == 2 && strcmp(argsRead[0], "run") == 0))
 					exit(1);
-
 				char *args[] = { "CircuitRouter-SeqSolver", argsRead[1], NULL };
-				if (execv("../CircuitRouter-SeqSolver/./CircuitRouter-SeqSolver", args) == -1) {
+				if (execv("../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver", args) == -1)
 					exit(1);
-				}
+				else
+					exit(0);
 			}
 			else { // parent task
-				++running_tasks;
+				addChild(taskHistory, pid);
 			}
 		}
 		else { printf("Unknown command.\n"); }
 	} while (running);
 
 
-	// Catch all remaining running tasks
-	while (running_tasks > 0) {
-		if ((child_pid = waitpid(-1, &status, WNOHANG)) > 0)
-		{
-			storetask(child_pid, status);
-			--running_tasks;
-		}
-	}
+	// Wait untill all remaining children are reaped
+	while (running_tasks > 0);
 
 	int i;
 	int j = vector_getSize(taskHistory);
@@ -187,7 +209,6 @@ int main(int argc, char **argv) {
 		printTaskInfo(task);
 		free(task);
 	}
-	puts("End");
 
 	// Free remaining memory
 	vector_free(taskHistory);
@@ -197,7 +218,7 @@ int main(int argc, char **argv) {
 
 /* =============================================================================
  *
- * End of CircuitRouter-SimpleShell.c
+ * End of CircuitRouter-AdvShell.c
  *
  * =============================================================================
  */

@@ -135,7 +135,7 @@ void createOutputFile(const char*fname) {
 
 
 	// Create result file and redirect stdout there
-	freopen(fullName, "w", stdout);
+	assert(freopen(fullName, "w", stdout) != NULL);
 }
 
 
@@ -187,15 +187,19 @@ static FILE * parseArgs(long argc, char* const argv[]) {
  */
 int main(int argc, char** argv) {
 
-	// Redirect error messages
-	freopen("stderr.log", "a", stderr); // dont erase previous stderr info (for better debugging)
+	int stdout_copy = dup(1);
+
+	// Redirect error messages			
+	assert(freopen("stderr.log", "a", stderr) != NULL); // dont erase previous stderr info (for better debugging)
+
+
 
 	// Open file
 	FILE * file = parseArgs(argc, (char** const)argv);
 	maze_t* mazePtr = maze_alloc();
 	assert(mazePtr);
 	// Read maze from file
-	long numPathToRoute = maze_read(mazePtr, file);	
+	long numPathToRoute = maze_read(mazePtr, file);
 	router_t* routerPtr = router_alloc(global_params[PARAM_XCOST],
 		global_params[PARAM_YCOST],
 		global_params[PARAM_ZCOST],
@@ -246,6 +250,10 @@ int main(int argc, char** argv) {
 		vector_free(pathVectorPtr);
 	}
 	list_free(pathVectorListPtr);
+
+	// Reset output to sdtout
+	fflush(stdout);
+	dup2(stdout_copy, 1);
 
 	exit(0);
 }
