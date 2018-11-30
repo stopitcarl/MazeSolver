@@ -427,6 +427,7 @@ int main(int argc, char **argv) {
 	// Free remaining memory
 	vector_free(taskHistory);
 	vector_free(clientList);
+	unlink(pipe_in_name);
 	free(pipe_in_name);
 
 	exit(0);
