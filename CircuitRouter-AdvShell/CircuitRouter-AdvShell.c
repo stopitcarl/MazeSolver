@@ -128,7 +128,6 @@ int tasksRunning(int add) {
 	return result;
 }
 
-
 /* =============================================================================
  * storetask : Stores task info for later consumption
  * =============================================================================
@@ -177,7 +176,6 @@ void addChild(vector_t * tasks, pid_t pid, Client *clientPtr) {
 	assert(vector_pushBack(taskHistory, task) == TRUE);
 	tasksRunning(1);
 }
-
 
 /* =============================================================================
  * childReaper: Handles SIGCHLD
