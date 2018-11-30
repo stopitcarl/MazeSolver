@@ -37,17 +37,16 @@ typedef struct client {
 	int fd;
 } Client;
 
-
-struct taskState {
+typedef struct taskState {
 	int state;
 	pid_t pid;
 	time_t startTime, stopTime;
 	Client* client;
-};
+} Task;
 
 vector_t *taskHistory;
 vector_t *clientList;
-int running_tasks;
+volatile int running_tasks;
 int active_clients;
 
 
@@ -77,7 +76,8 @@ void registertClient(char * clientName, char * clientPipe) {
  */
 void answerClient(Client * clientPtr, char * answer) {
 	assert(clientPtr != NULL);
-	assert(write(clientPtr->fd, answer, strlen(answer)) > 0);
+	if (clientPtr->alive == TRUE)
+		assert(write(clientPtr->fd, answer, strlen(answer)) > 0);
 }
 
 /* =============================================================================
@@ -90,9 +90,8 @@ Client * getClient(char * name) {
 	Client* clientPtr;
 	for (; i < vector_getSize(clientList); i++) {
 		clientPtr = vector_at(clientList, i);
-		if (strcmp(name, name) == 0) {
+		if (strcmp(name, clientPtr->name) == 0)
 			return clientPtr;
-		}
 	}
 	return NULL;
 }
@@ -108,7 +107,6 @@ void disconnectClient(char * clientName) {
 		client = *(Client*)vector_at(clientList, i);
 		if (strcmp(clientName, client.name) == 0) {
 			client.alive = FALSE;
-			printf("Deactivated client\n");
 			break;
 		}
 	}
@@ -116,24 +114,27 @@ void disconnectClient(char * clientName) {
 }
 
 /* =============================================================================
- * addChild : Add child process info to list
+ * tasksRunning: Add and fetch from
  * =============================================================================
  */
-void addChild(vector_t * tasks, pid_t pid, Client *clientPtr) {
-	struct taskState *task = malloc(sizeof(struct taskState));
-	time(&(task->startTime));
-	task->pid = pid;
-	task->client = clientPtr;
-	assert(vector_pushBack(taskHistory, task) == TRUE);
-	++running_tasks;
+int tasksRunning(int add) {
+	sigset_t x;
+	sigemptyset(&x);
+	sigaddset(&x, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &x, NULL);
+	running_tasks += add;
+	int result = running_tasks;
+	sigprocmask(SIG_UNBLOCK, &x, NULL);
+	return result;
 }
+
 
 /* =============================================================================
  * storetask : Stores task info for later consumption
  * =============================================================================
  */
 void storeChild(pid_t pid, int status) {
-	struct taskState *task = NULL;
+	Task *task = NULL;
 	long i = vector_getSize(taskHistory) - 1;
 
 	for (; i >= 0; i--) { // Process is most likely at the top of the list
@@ -142,11 +143,12 @@ void storeChild(pid_t pid, int status) {
 			break;
 	}
 	assert(task); // Check that a task was found with given pid	
-	if (task->client != NULL)
-		answerClient(task->client, "Circuit Solved\n");
+	if (task->client != NULL) {
+		answerClient(task->client, "Circuit solved\n");
+	}
 	task->state = status;
 	time(&(task->stopTime));
-	--running_tasks;
+	tasksRunning(-1);
 }
 
 /* =============================================================================
@@ -162,6 +164,20 @@ void waitForChild() {
 		}
 	}
 }
+
+/* =============================================================================
+ * addChild : Add child process info to list
+ * =============================================================================
+ */
+void addChild(vector_t * tasks, pid_t pid, Client *clientPtr) {
+	Task *task = malloc(sizeof(Task));
+	time(&(task->startTime));
+	task->pid = pid;
+	task->client = clientPtr;
+	assert(vector_pushBack(taskHistory, task) == TRUE);
+	tasksRunning(1);
+}
+
 
 /* =============================================================================
  * childReaper: Handles SIGCHLD
@@ -181,7 +197,7 @@ void childReaper(int sig)
  * printTaskInfo: Blocks untill child is released
  * =============================================================================
  */
-void printTaskInfo(struct taskState * task) {
+void printTaskInfo(Task * task) {
 	printf("CHILD EXITED (PID=%d; return ", task->pid);
 
 	// Print OK if process exited normally, NOK otherwise
@@ -189,7 +205,7 @@ void printTaskInfo(struct taskState * task) {
 		printf("OK;");
 	else
 		printf("NOK;");
-	printf(" %ld s)\n", task->stopTime - task->startTime); // TODO: check if output has decimals correct
+	printf(" %ld s)\n", task->stopTime - task->startTime);
 }
 
 /* =============================================================================
@@ -233,6 +249,7 @@ int main(int argc, char **argv) {
 		available_tasks = -1; // no args provided = infinite tasks
 	}
 
+
 	// Create input pipe
 	fd_set fds;
 	unlink(pipe_in_name);
@@ -259,10 +276,9 @@ int main(int argc, char **argv) {
 
 	// Shell loop
 	do {
-		if (!isClient) {
-			printf(">>> ");
-			fflush(stdout);
-		}
+
+		printf(">>> ");
+		fflush(stdout);
 		isClient = 0;
 
 		// Select inputs to listen to
@@ -295,9 +311,18 @@ int main(int argc, char **argv) {
 
 		// Handle client interactions
 		if (isClient) {
+
+			// Print client message
+			printf("\nReceived: ");
+			for (int i = 0; i < numArgs; i++)
+				printf(" %s", argsRead[i]);
+			printf("\n");
+			fflush(stdout);
+
 			// Connect
 			if (strcmp(argsRead[0], "c") == 0) {
 				registertClient(argsRead[1], argsRead[2]);
+				getClient(argsRead[1]);
 				continue;
 			}
 
@@ -309,13 +334,9 @@ int main(int argc, char **argv) {
 				continue;;
 			}
 			// Run
-			else if (strcmp(argsRead[0], "r") == 0) {
+			else if (strcmp(argsRead[0], "r") == 0 && numArgs == 4) {
 				if (strcmp(argsRead[2], "run") == 0) {
-					if (numArgs != 4) {
-						answerClient(clientPtr, "Command not supported.\n");
-						continue;
-					}
-					else if (running_tasks == available_tasks) {
+					if (tasksRunning(0) == available_tasks) {
 						waitForChild(); // block untill any child task is finished													
 					}
 
@@ -353,10 +374,8 @@ int main(int argc, char **argv) {
 			}
 			else if (strcmp(argsRead[0], "run") == 0) {
 				if (numArgs < 2) { printf("No input file specified\n"); continue; }
-				if (running_tasks == available_tasks) {
-					printf("All threads are busy. Waiting for a task to end\n");
-					waitForChild(); // block untill any child task is finished							
-					printf("Starting your task\n");
+				if (tasksRunning(0) == available_tasks) {
+					waitForChild(); // block untill any child task is finished												
 				}
 
 				pid = fork();
@@ -383,15 +402,15 @@ int main(int argc, char **argv) {
 
 
 	// Wait untill all remaining children are reaped
-	while (running_tasks > 0)
+	while (tasksRunning(0) > 0)
 		pause();
 
 	// Print children process history
 	int i;
 	int j = vector_getSize(taskHistory);
-	struct taskState *task;
+	Task *task;
 	for (i = 0; i < j; ++i) {
-		task = (struct taskState *)vector_at(taskHistory, i);
+		task = (Task *)vector_at(taskHistory, i);
 		printTaskInfo(task);
 		free(task);
 	}
@@ -402,6 +421,7 @@ int main(int argc, char **argv) {
 	for (i = 0; i < j; ++i) {
 		clientPtr = (Client *)vector_at(clientList, i);
 		free(clientPtr->name);
+		free(clientPtr);
 	}
 
 	// Free remaining memory

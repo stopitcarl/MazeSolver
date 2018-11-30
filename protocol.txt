@@ -1,0 +1,8 @@
+protocol
+	[type] [pid] [args..]
+
+type:
+	c - ask server to connect to pipe given in args
+	r - run command given in args
+	e - exit
+
