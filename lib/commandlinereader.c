@@ -3,8 +3,8 @@
 // Sistemas Operativos, DEI/IST/ULisboa 2018-19
 */
 
-#include <string.h>
-#include <stdio.h>
+#include "commandlinereader.h"
+
 
 /**
 Reads up to 'vectorSize' space-separated arguments from the standard input
@@ -73,12 +73,10 @@ Arguments:
  used to hold the strings of each argument.
 
 Return value:
- The number of arguments that were read, or -1 if some error occurred.
+ The number of arguments that were read, -1 if some error occurred or -2 if EOF is encountered.
 */
 int readLineArgumentsFd(int fd, char **argVector, int vectorSize, char *buffer, int bufferSize)
 {
-	FILE *fp = fdopen(fd, "r");
-	if (!fp) return -1;
 	int numTokens = 0;
 	char *s = " \r\n\t";
 
@@ -89,9 +87,13 @@ int readLineArgumentsFd(int fd, char **argVector, int vectorSize, char *buffer, 
 	if (argVector == NULL || buffer == NULL || vectorSize <= 0 || bufferSize <= 0)
 		return 0;
 
-	if (fgets(buffer, bufferSize, fp) == NULL) {
+	if ((i = read(fd, buffer, bufferSize)) == 0)
+		return -2;
+	else if (i == -1)
 		return -1;
-	}
+	else
+		buffer[i] = '\0';
+
 
 	/* get the first token */
 	token = strtok(buffer, s);
