@@ -111,7 +111,7 @@ void disconnect() {
  * =============================================================================
  */
 char * makePipeName(int pid) {
-	int length = snprintf(NULL, 0, "%d", pid); // get number of cases in number
+	int length = snprintf(NULL, 0, "%d", pid); // get number of digits in number
 	char *str = malloc(sizeof(char) * (length + 10 + 1));
 	sprintf(str, "/tmp/%d.pipe", pid);
 	return str;
@@ -147,6 +147,7 @@ int main(int argc, char **argv) {
 
 	// Create client pipe and tell server pipe name
 	connect(pipe_in_name);
+	
 	// Shell loop
 	do {
 		// Read args from input
@@ -156,7 +157,7 @@ int main(int argc, char **argv) {
 		if (numArgs == -1) {
 			continue;
 		}
-		else if (numArgs == -2) { // IF EOF is reached
+		else if (numArgs == -2) { // If EOF is reached, disconnect
 			break;
 		}
 		else if (numArgs == 0) {
